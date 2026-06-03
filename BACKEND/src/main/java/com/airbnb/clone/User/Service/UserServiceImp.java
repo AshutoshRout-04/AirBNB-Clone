@@ -2,7 +2,7 @@ package com.airbnb.clone.User.Service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PostMapping;
+
 
 import com.airbnb.clone.User.UserException;
 import com.airbnb.clone.User.Entity.User;
@@ -16,6 +16,7 @@ public class UserServiceImp implements UserService {
 	
 	@Autowired
 	private final UserRepository Repo;
+	
 	@Override
 	public User Register(User user) throws UserException {
 		
@@ -36,6 +37,7 @@ public class UserServiceImp implements UserService {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
 
 	@Override
 	public boolean DeleteUser(String Id) {
