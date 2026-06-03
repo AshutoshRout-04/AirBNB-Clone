@@ -27,8 +27,7 @@ public class User {
     String Password;
     String Contact;
     
-	public String getEmail() {
-		// TODO Auto-generated method stub
+	public String getEmail() { 
 		return this.Email;
 	}
     

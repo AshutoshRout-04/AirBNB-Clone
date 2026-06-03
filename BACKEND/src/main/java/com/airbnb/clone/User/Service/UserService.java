@@ -1,6 +1,6 @@
 package com.airbnb.clone.User.Service;
 
-import org.springframework.stereotype.Service;
+
 
 import com.airbnb.clone.User.UserException;
 import com.airbnb.clone.User.Entity.User;
