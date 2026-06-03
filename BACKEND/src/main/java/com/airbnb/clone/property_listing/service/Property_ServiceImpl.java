@@ -16,6 +16,7 @@ public class Property_ServiceImpl implements Property_Service {
       
     @Override
     public Property addProperty(Property property) {
+        System.out.println("Property Added Sucessfully");
         return propertyRepository.save(property);
     }
     
@@ -47,9 +48,8 @@ public Property updateProperty(Long id, Property property) {
 }
     
     @Override
-    public Property deleteProperty(Long id) {
-        Property property = propertyRepository.findById(id).orElseThrow(() -> new PropertyNotFoundException("Property Not Found: " + id));
+    public String deleteProperty(Long id) {
         propertyRepository.deleteById(id);
-        return property;
+        return "Property deleted successfully";
     }
 }

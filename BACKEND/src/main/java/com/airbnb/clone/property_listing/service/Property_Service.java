@@ -15,5 +15,5 @@ public interface Property_Service {
     Property getPropertyById(Long id);
     Property addProperty(Property property);
     Property updateProperty(Long id, Property property);
-    Property deleteProperty(Long id);
+    String deleteProperty(Long id);
 }

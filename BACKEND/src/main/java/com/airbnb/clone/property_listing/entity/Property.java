@@ -1,6 +1,7 @@
 package com.airbnb.clone.property_listing.entity;
 
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -20,6 +21,7 @@ import lombok.Setter;
 public class Property {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name ="property_id")
     private Long id;
 
     @NotBlank(message = "Title can't be blank")
@@ -31,16 +33,17 @@ public class Property {
     @NotBlank(message = "Location can't be blank")
     private String location;
 
+    @Column(name = "price_per_night")
     @Positive(message = "Price per night must be positive")
     private float pricePerNight;
 
     @Positive(message = "Max guests must be positive")
     private int maxGuests;
 
-    @Positive(message = "Bedrooms must be positive")
+    @Positive(message = "No of Bedrooms must be positive")
     private int bedrooms;
 
-    @Positive(message = "Bathrooms must be positive")
+    @Positive(message = "No of Bathrooms must be positive")
     private int bathrooms;
 
     private boolean available;
