@@ -2,8 +2,6 @@ package com.airbnb.clone.User.Service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-
 import com.airbnb.clone.User.UserException;
 import com.airbnb.clone.User.Entity.User;
 import com.airbnb.clone.User.repository.UserRepository;
@@ -13,21 +11,21 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class UserServiceImp implements UserService {
-	
+
 	@Autowired
-	private  UserRepository Repo;
+	private UserRepository Repo;
+
 	@Override
 	public User Register(User user) throws UserException {
-		
-		
-		if(user==null) {
+
+		if (user == null) {
 			throw new UserException("No Data Present");
 		}
-		
-		if(Repo.ExistedbyEmail(user.getEmail())) {
+
+		if (Repo.existsByEmail(user.getEmail())) {
 			throw new UserException("Email Already Existed");
 		}
-		
+
 		return Repo.save(user);
 	}
 
@@ -37,41 +35,39 @@ public class UserServiceImp implements UserService {
 	}
 
 	@Override
-	public boolean DeleteUser(String Id) {
-		User user =getUserById(Id);
-		if(user==null) {
+	public boolean DeleteUser(Long Id) {
+		User user = Repo.findById(Id).orElse(null);
+		if (user == null) {
 			return false;
 		}
-		Repo.deleteById(user.getId());
+		Repo.delete(user);
 		return true;
 	}
 
 	@Override
-	public User Update(String Id,User updatedUser) throws UserException {
-		
-		User user=Repo.findById(Id).orElseThrow(()->new RuntimeException("No User Found"));
-		
-		
-		user=User.builder().Id(Id)
-					.Email(updatedUser.getEmail())
-					.Password(updatedUser.getPassword())
-					.Contact(updatedUser.getContact())
-					.build();
-		
+	public User Update(Long Id, User updatedUser) throws UserException {
+
+		User user = Repo.findById(Id).orElseThrow(() -> new RuntimeException("No User Found"));
+
+		user = User.builder().Id(Id)
+				.Email(updatedUser.getEmail())
+				.Password(updatedUser.getPassword())
+				.Contact(updatedUser.getContact())
+				.build();
+
 		return Repo.save(user);
 
 	}
 
 	@Override
 	public User getUserByEmail(String Email) {
-		
+
 		return Repo.findByEmail(Email);
 	}
 
 	@Override
-	public User getUserById(String Id) {
-		return Repo.findById(Id).orElseThrow(()-> new RuntimeException("Not User Found with Id: "+ Id));
+	public User getUserById(Long Id) throws UserException {
+		return Repo.findById(Id).orElseThrow(() -> new RuntimeException("Not User Found with Id: " + Id));
 	}
 
-	
 }

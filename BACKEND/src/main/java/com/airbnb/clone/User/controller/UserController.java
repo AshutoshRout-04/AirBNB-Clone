@@ -19,32 +19,32 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/User")
+@RequestMapping("/user")
 public class UserController {
 	
 	@Autowired
 	private UserService Service;
 	
-	@PostMapping("/Register")
+	@PostMapping("/register")
 	public ResponseEntity<User> Register(@RequestBody User User) throws UserException  {
 		return ResponseEntity.ok(Service.Register(User));
 	}
 	
-	@GetMapping("/GetUser/{Id}")
-	public ResponseEntity<User> GetUser(@PathVariable String Id) throws UserException  {
+	@GetMapping("/getUser/{Id}")
+	public ResponseEntity<User> GetUser(@PathVariable Long Id) throws UserException  {
 		return ResponseEntity.ok(Service.getUserById(Id));
 	}
 	
-	@DeleteMapping("/DeleteUser/{Id}")
-	public String DeleteUser(@PathVariable String Id)   {
+	@DeleteMapping("/deleteUser/{Id}")
+	public String DeleteUser(@PathVariable Long Id)   {
 		 if(Service.DeleteUser(Id)) {
 			 return "Deleted";
 		 }
 		 return "User not Found";
 	}
 	
-	@PutMapping("/UpdateUser/{Id}")
-	public ResponseEntity<User> UpdateUser(@PathVariable String Id,@RequestBody User User) throws UserException {
+	@PutMapping("/updateUser/{Id}")
+	public ResponseEntity<User> UpdateUser(@PathVariable Long Id,@RequestBody User User) throws UserException {
 		return ResponseEntity.ok(Service.Update(Id, User));
 	}
 	

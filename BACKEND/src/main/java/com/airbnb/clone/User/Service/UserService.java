@@ -8,11 +8,12 @@ import com.airbnb.clone.User.Entity.User;
 
 public interface UserService {
 
-	public User Register(User User) throws UserException;
-	public User Login(User User);
-	public boolean DeleteUser(String Id);
-	public User Update(String Id,User User) throws UserException;
-	public User getUserByEmail(String Email);
-	public User getUserById(String Id) throws UserException;
+	User Register(User User) throws UserException;
+	User Login(User User);
+	boolean DeleteUser(Long Id);
+	User Update(Long Id,User User) throws UserException;
+	User getUserByEmail(String Email);
+	User getUserById(Long Id) throws UserException;
+	
 	
 }
