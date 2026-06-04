@@ -27,7 +27,7 @@ public class HostController {
                 HttpStatus.CREATED);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/get/{id}")
     public ResponseEntity<Host> getHostById(
             @PathVariable Long id) {
 
@@ -35,14 +35,14 @@ public class HostController {
                 hostService.getHostById(id));
     }
 
-    @GetMapping
+    @GetMapping("/getall")
     public ResponseEntity<List<Host>> getAllHosts() {
 
         return ResponseEntity.ok(
                 hostService.getAllHosts());
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/update/{id}")
     public ResponseEntity<Host> updateHost(
             @PathVariable Long id,
             @RequestBody Host host) {
@@ -51,7 +51,7 @@ public class HostController {
                 hostService.updateHost(id, host));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> deleteHost(
             @PathVariable Long id) {
 
