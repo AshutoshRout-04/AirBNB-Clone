@@ -21,16 +21,12 @@ public class User {
 	
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    String Id;
+    private Long Id;
+    private String Email;
+    private String Password;
+    private String Contact;
     
-    String Email;
-    String Password;
-    String Contact;
-    
-	public String getEmail() {
-		// TODO Auto-generated method stub
-		return this.Email;
-	}
+	
     
     
 
