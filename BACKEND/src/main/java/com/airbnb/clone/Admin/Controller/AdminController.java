@@ -1,9 +1,14 @@
 package com.airbnb.clone.Admin.Controller;
 
+
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.airbnb.clone.Guest.Entity.Guest;
 import com.airbnb.clone.Guest.Service.GuestService;
@@ -12,7 +17,6 @@ import com.airbnb.clone.Host.Service.HostService;
 import com.airbnb.clone.property_booking.entity.Booking;
 import com.airbnb.clone.property_booking.service.BookingService;
 import com.airbnb.clone.property_listing.entity.Property;
-
 import com.airbnb.clone.property_listing.service.Property_Service;
 
 import lombok.RequiredArgsConstructor;
