@@ -58,6 +58,7 @@ public class UserServiceImp implements UserService {
 				.Email(updatedUser.getEmail())
 				.Password(updatedUser.getPassword())
 				.Contact(updatedUser.getContact())
+				.Role(updatedUser.getRole())
 				.build();
 
 		return Repo.save(user);

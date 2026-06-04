@@ -1,11 +1,16 @@
 package com.airbnb.clone.property_listing.entity;
 
 
+import com.airbnb.clone.Host.Entity.Host;
+import com.airbnb.clone.property_booking.entity.Booking;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
@@ -26,6 +31,13 @@ public class Property {
 
     @NotBlank(message = "Title can't be blank")
     private String title;
+    
+    
+    
+    
+    // Host is mapped
+    @ManyToOne
+    private Host Host_Id;
 
     @NotBlank(message = "Description can't be blank")
     private String description;
@@ -47,4 +59,16 @@ public class Property {
     private int bathrooms;
 
     private boolean available;
+    
+    
+    //Dibya thinks you should add a PropertyType field here to help with frontend styling
+    
+    
+    
+    // Added Property mapping
+    @OneToMany(mappedBy="property")
+    private Booking Bookings;
+    
+    
+    
 }
