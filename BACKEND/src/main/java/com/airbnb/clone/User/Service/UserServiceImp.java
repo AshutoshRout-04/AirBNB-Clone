@@ -1,6 +1,7 @@
 package com.airbnb.clone.User.Service;
 
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.airbnb.clone.Guest.Entity.Guest;
