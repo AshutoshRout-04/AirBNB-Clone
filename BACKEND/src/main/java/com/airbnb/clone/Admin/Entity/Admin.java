@@ -1,6 +1,6 @@
 package com.airbnb.clone.Admin.Entity;
 
-import org.springframework.data.annotation.Id;
+import jakarta.persistence.Id;
 
 import com.airbnb.clone.User.Entity.User;
 

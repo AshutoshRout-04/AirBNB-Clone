@@ -1,6 +1,8 @@
 package com.airbnb.clone.property_listing.entity;
 
 
+import java.util.List;
+
 import com.airbnb.clone.Host.Entity.Host;
 import com.airbnb.clone.property_booking.entity.Booking;
 
@@ -67,7 +69,7 @@ public class Property {
     
     // Added Property mapping
     @OneToMany(mappedBy="property")
-    private Booking Bookings;
+    private List<Booking> Bookings;
     
     
     

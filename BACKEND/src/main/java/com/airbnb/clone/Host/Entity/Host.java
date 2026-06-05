@@ -3,7 +3,7 @@ package com.airbnb.clone.Host.Entity;
 import java.util.List;
 
 
-import org.springframework.data.annotation.Id;
+import jakarta.persistence.Id;
 
 import com.airbnb.clone.User.Entity.User;
 import com.airbnb.clone.property_listing.entity.Property;
@@ -45,7 +45,7 @@ public class Host {
     @JoinColumn(name="User_id")
    private User user;
     
-    @OneToMany(mappedBy = "Host_id")
+    @OneToMany(mappedBy = "Host_Id")
     private List<Property> properties;
     
 }

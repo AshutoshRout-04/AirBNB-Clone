@@ -3,7 +3,7 @@ package com.airbnb.clone.Guest.Entity;
 import java.time.LocalDate;
 import java.util.List;
 
-import org.springframework.data.annotation.Id;
+import jakarta.persistence.Id;
 
 import com.airbnb.clone.User.Entity.User;
 import com.airbnb.clone.property_booking.entity.Booking;
