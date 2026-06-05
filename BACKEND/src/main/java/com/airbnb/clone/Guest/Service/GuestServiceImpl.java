@@ -44,7 +44,7 @@ public class GuestServiceImpl implements GuestService {
         Guest guest = guestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Guest Not Found"));
 
-        guest.setFullName(updatedGuest.getFullName());
+  
         guest.setDateOfBirth(updatedGuest.getDateOfBirth());
         guest.setProfileImage(updatedGuest.getProfileImage());
         guest.setTotalBookings(updatedGuest.getTotalBookings());

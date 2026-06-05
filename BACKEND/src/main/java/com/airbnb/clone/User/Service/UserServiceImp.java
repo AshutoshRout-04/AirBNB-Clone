@@ -3,7 +3,12 @@ package com.airbnb.clone.User.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.airbnb.clone.Guest.Entity.Guest;
+import com.airbnb.clone.Guest.Repository.GuestRepository;
+import com.airbnb.clone.Host.Entity.Host;
+import com.airbnb.clone.Host.Repository.HostRepository;
 import com.airbnb.clone.User.UserException;
+import com.airbnb.clone.User.Entity.Role;
 import com.airbnb.clone.User.Entity.User;
 import com.airbnb.clone.User.repository.UserRepository;
 
@@ -13,10 +18,12 @@ import lombok.RequiredArgsConstructor;
 
 public class UserServiceImp implements UserService {
 
-	
-	
-
+	@Autowired
 	private UserRepository Repo;
+	@Autowired
+	private GuestRepository Grepo;
+	@Autowired
+	private HostRepository Hrepo;
 
 
 	@Override
@@ -26,11 +33,32 @@ public class UserServiceImp implements UserService {
 			throw new UserException("No Data Present");
 		}
 
-		if (Repo.existsByEmail(user.getEmail())) {
+		if (Repo.findByEmail(user.getEmail()) != null) {
 			throw new UserException("Email Already Existed");
 		}
+		
+		  User savedUser = Repo.save(user);
 
-		return Repo.save(user);
+		    if(savedUser.getRole() == Role.GUEST) {
+
+		        Guest guest = new Guest();
+		        guest.setUser(savedUser);
+		        guest.setTotalBookings(0);
+		        guest.setAverageRating(0.0);
+
+		        Grepo.save(guest);
+		    }
+		    
+		    if(savedUser.getRole() == Role.HOST) {
+
+		        Host host = new Host();
+		        host.setUser(savedUser);
+		        host.setVerified(false);
+		        
+		        Hrepo.save(host);
+		    }
+		    return savedUser;
+
 	}
 
 	@Override
@@ -54,11 +82,12 @@ public class UserServiceImp implements UserService {
 
 		User user = Repo.findById(Id).orElseThrow(() -> new RuntimeException("No User Found"));
 
-		user = User.builder().Id(Id)
-				.Email(updatedUser.getEmail())
-				.Password(updatedUser.getPassword())
-				.Contact(updatedUser.getContact())
-				.Role(updatedUser.getRole())
+		user = User.builder().id(Id)
+				.fullname(updatedUser.getFullname())
+				.email(updatedUser.getEmail())
+				.password(updatedUser.getPassword())
+				.contact(updatedUser.getContact())
+				.role(updatedUser.getRole())
 				.build();
 
 		return Repo.save(user);

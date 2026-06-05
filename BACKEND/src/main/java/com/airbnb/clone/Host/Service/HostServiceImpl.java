@@ -47,7 +47,7 @@ public class HostServiceImpl implements HostService {
         Host host = hostRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Host Not Found"));
 
-        host.setFullName(updatedHost.getFullName());
+      
         host.setProfileImage(updatedHost.getProfileImage());
         host.setAbout(updatedHost.getAbout());
         host.setVerified(updatedHost.getVerified());

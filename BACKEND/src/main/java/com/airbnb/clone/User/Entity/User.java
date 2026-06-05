@@ -27,13 +27,14 @@ public class User {
 	
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long Id;
-    private String Email;
-    private String Password;
+    private Long id;
+    private String fullname;
+    private String email;
+    private String password;
     
     @Enumerated(EnumType.STRING)
-    private Role Role;
-    private String Contact;
+    private Role role;
+    private String contact;
     
     @OneToOne(mappedBy = "user")
     private Host host;

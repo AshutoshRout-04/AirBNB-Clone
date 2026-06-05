@@ -32,7 +32,7 @@ public class Guest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String fullName;
+  
 
     private LocalDate dateOfBirth;
 
@@ -46,7 +46,7 @@ public class Guest {
    @JoinColumn(name="User_Id")
    private User user;
    
-   @OneToMany(mappedBy="")
+   @OneToMany(mappedBy="guest")
    private List<Booking> bookings;
    
 }
