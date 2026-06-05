@@ -1,13 +1,12 @@
 package com.airbnb.clone.User.Service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Service;
 
 import com.airbnb.clone.User.UserException;
 import com.airbnb.clone.User.Entity.User;
 import com.airbnb.clone.User.repository.UserRepository;
 
-import lombok.RequiredArgsConstructor;
 
 @Service
 
