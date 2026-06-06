@@ -12,7 +12,7 @@ import com.airbnb.clone.Guest.Service.GuestService;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/guests")
+@RequestMapping("/api/Guest")
 @RequiredArgsConstructor
 public class GuestController {
 

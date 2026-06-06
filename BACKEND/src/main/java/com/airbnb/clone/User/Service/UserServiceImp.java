@@ -2,6 +2,7 @@ package com.airbnb.clone.User.Service;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.airbnb.clone.Guest.Entity.Guest;
@@ -24,7 +25,9 @@ public class UserServiceImp implements UserService {
 	private GuestRepository Grepo;
 	@Autowired
 	private HostRepository Hrepo;
-
+	
+	@Autowired
+	private PasswordEncoder passwordEncoder;
 
 	@Override
 	public User Register(User user) throws UserException {
@@ -33,10 +36,11 @@ public class UserServiceImp implements UserService {
 			throw new UserException("No Data Present");
 		}
 
-		if (Repo.findByEmail(user.getEmail()) != null) {
+		if (Repo.findByEmail(user.getEmail()).isPresent()) {
 			throw new UserException("Email Already Existed");
 		}
-		
+			String pass=user.getPassword();
+		user.setPassword(passwordEncoder.encode(pass));
 		  User savedUser = Repo.save(user);
 
 		    if(savedUser.getRole() == Role.GUEST) {
@@ -85,7 +89,7 @@ public class UserServiceImp implements UserService {
 		user = User.builder().id(Id)
 				.fullname(updatedUser.getFullname())
 				.email(updatedUser.getEmail())
-				.password(updatedUser.getPassword())
+				.password(passwordEncoder.encode(updatedUser.getPassword()))
 				.contact(updatedUser.getContact())
 				.role(updatedUser.getRole())
 				.build();
@@ -97,7 +101,7 @@ public class UserServiceImp implements UserService {
 	@Override
 	public User getUserByEmail(String Email) {
 
-		return Repo.findByEmail(Email);
+		return Repo.findByEmail(Email).orElseThrow();
 	}
 
 	@Override

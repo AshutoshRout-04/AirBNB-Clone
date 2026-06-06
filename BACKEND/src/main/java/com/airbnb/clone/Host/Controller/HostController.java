@@ -12,13 +12,13 @@ import com.airbnb.clone.Host.Service.HostService;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/hosts")
+@RequestMapping("/Host")
 @RequiredArgsConstructor
 public class HostController {
 
     private final HostService hostService;
 
-    @PostMapping
+    @PostMapping("/add")
     public ResponseEntity<Host> createHost(
             @RequestBody Host host) {
 

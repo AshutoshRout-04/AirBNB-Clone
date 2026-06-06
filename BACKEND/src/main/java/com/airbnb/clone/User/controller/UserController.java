@@ -25,7 +25,7 @@ public class UserController {
 	@Autowired
 	private UserService Service;
 	
-	@PostMapping("/register")
+	@PostMapping("/public/register")
 	public ResponseEntity<User> Register(@RequestBody User User) throws UserException  {
 		return ResponseEntity.ok(Service.Register(User));
 	}

@@ -1,5 +1,12 @@
 package com.airbnb.clone.User.Entity;
 
+import java.util.Collection;
+import java.util.List;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
 import com.airbnb.clone.Guest.Entity.Guest;
 import com.airbnb.clone.Host.Entity.Host;
 
@@ -23,7 +30,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Builder
 
-public class User {
+public class User implements UserDetails  {
 	
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,6 +48,24 @@ public class User {
     
     @OneToOne(mappedBy = "user")
     private Guest guest;
+
+	@Override
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+		// TODO Auto-generated method stub
+		 return List.of(
+		            new SimpleGrantedAuthority("ROLE_" + role.name())
+		    );
+	}
+
+	@Override
+	public String getUsername() {
+		// TODO Auto-generated method stub
+		return fullname;
+	}
+
+	
+
+
 
     
 	

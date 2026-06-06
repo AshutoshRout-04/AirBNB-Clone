@@ -40,6 +40,8 @@ public class Property {
     // Host is mapped
     @ManyToOne
     private Host Host_Id;
+    
+    
 
     @NotBlank(message = "Description can't be blank")
     private String description;
