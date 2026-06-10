@@ -1,15 +1,14 @@
 package com.airbnb.clone.Security;
 
 import com.airbnb.clone.JwtToken.AuthUtilFilter;
-import com.airbnb.clone.User.Entity.Role;
-import com.airbnb.clone.property_listing.controller.Property_Controller;
+
 
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
+
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;

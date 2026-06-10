@@ -1,13 +1,12 @@
 package com.airbnb.clone.Admin.Service;
 
 import java.util.List;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.stereotype.Service;
 
 import com.airbnb.clone.Admin.Entity.Admin;
 import com.airbnb.clone.Admin.Exception.AdminException;
 import com.airbnb.clone.Admin.Repository.AdminRepository;
-import com.airbnb.clone.Admin.Service.AdminService;
+
 
 import lombok.RequiredArgsConstructor;
 
@@ -15,12 +14,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AdminServiceImpl implements AdminService {
 
-    private final AuthenticationManager authenticationManager;
+    
 
     private final AdminRepository adminRepository;
-
-   
-
+    
     @Override
     public Admin createAdmin(Admin admin) {
         return adminRepository.save(admin);

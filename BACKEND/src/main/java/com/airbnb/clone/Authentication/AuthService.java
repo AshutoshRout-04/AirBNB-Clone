@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthService {
 
-
+	
 	private final AuthenticationManager AuthManager;
 	
 	private final AuthUtil authutil;

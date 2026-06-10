@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import PropertyCard from "../components/PropertyCard";
+import Header from "../components/Header";
 import { getAllProperties } from "../services/PropertyService";
 
 function Home() {
@@ -16,21 +17,20 @@ function Home() {
   }, []);
 
   return (
-    <div>
-      <h1>Property Listings</h1>
+    <>
+      <Header />
 
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "20px",
-        }}
-      >
-        {properties.map((property) => (
-          <PropertyCard key={property.id} property={property} />
-        ))}
+      <div className="container">
+        <div className="property-grid">
+          {properties.map((property) => (
+            <PropertyCard
+              key={property.id}
+              property={property}
+            />
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
