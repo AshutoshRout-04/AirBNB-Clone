@@ -1,8 +1,10 @@
 package com.airbnb.clone.property_booking.controller;
 
 import java.util.List;
-
 import org.springframework.http.HttpStatus;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,8 +20,8 @@ import com.airbnb.clone.property_booking.dto.BookingRequestDto;
 @RequestMapping("/api/v1/bookings") // Keep the original mapping the frontend uses
 @RequiredArgsConstructor
 public class BookingController {
-
-        private final BookingService bookingService;
+        @Autowired
+        private BookingService bookingService;
 
         @PostMapping
         public ResponseEntity<Booking> createBooking(@RequestBody BookingRequestDto bookingDto) {
