@@ -1,7 +1,9 @@
-import Home from "./pages/Home";
+import React from "react";
+import AppRoutes from "./routes/AppRoutes";
 
 function App() {
-  return <Home />;
+  return <AppRoutes />;
 }
 
 export default App;
+

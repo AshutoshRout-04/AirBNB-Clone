@@ -1,0 +1,211 @@
+.property-card {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+  background-color: var(--bg-main);
+  padding: 8px;
+  border: 1px solid transparent;
+}
+
+.property-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(0, 0, 0, 0.03);
+}
+
+/* Image Container */
+.property-image-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background-color: var(--bg-light);
+}
+
+.property-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-normal);
+}
+
+.property-card:hover .property-image {
+  transform: scale(1.05);
+}
+
+/* Wishlist Heart Button */
+.wishlist-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--transition-fast);
+}
+
+.wishlist-btn:hover {
+  transform: scale(1.15);
+}
+
+.wishlist-btn:active {
+  transform: scale(0.9);
+}
+
+.heart-icon {
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.15));
+  transition: fill var(--transition-fast), stroke var(--transition-fast);
+}
+
+/* Info Section */
+.property-info {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 4px 4px 4px;
+  gap: 4px;
+}
+
+.property-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.property-location {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.property-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+.star-icon {
+  color: var(--text-main);
+}
+
+.property-title {
+  font-size: 14px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 400;
+}
+
+.property-price-row {
+  font-size: 15px;
+  margin-top: 4px;
+}
+
+.price-value {
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.price-label {
+  color: var(--text-main);
+  font-weight: 400;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .property-card {
+    padding: 0;
+    border-radius: 0;
+    border: none;
+  }
+
+  .property-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .property-image-container {
+    border-radius: var(--radius-md);
+  }
+}
+
+/* Guest Favourite Badge */
+.guest-favourite-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background-color: var(--bg-main);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-full);
+  padding: 4px 10px;
+  box-shadow: var(--shadow-sm);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.guest-favourite-badge span {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.2px;
+}
+
+/* Rupee Layout Styles */
+.rupee-style {
+  padding-top: 10px !important;
+}
+
+.rupee-style .property-location {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.flex-row-align {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.bullet-dot {
+  color: var(--text-muted);
+  margin: 0 4px;
+}
+
+.property-rating-inline {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.inline-star {
+  color: var(--text-main);
+  display: inline-block;
+  vertical-align: middle;
+}
+
