@@ -25,8 +25,6 @@ public class AuthUtilFilter extends OncePerRequestFilter {
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
-		// TODO Auto-generated method stub
-		
 		final String requestTokenHeader=request.getHeader("Authorization");
 		
 		if(requestTokenHeader==null || !requestTokenHeader.startsWith("Bearer")) {
@@ -39,7 +37,6 @@ public class AuthUtilFilter extends OncePerRequestFilter {
 		try {
 			email = authUtil.getEmailFromToken(token);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		

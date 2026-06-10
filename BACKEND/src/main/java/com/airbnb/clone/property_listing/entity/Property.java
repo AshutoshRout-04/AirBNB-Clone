@@ -34,9 +34,6 @@ public class Property {
     @NotBlank(message = "Title can't be blank")
     private String title;
     
-    
-    
-    
     // Host is mapped
     @ManyToOne
     private Host Host_Id;
