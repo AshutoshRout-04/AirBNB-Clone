@@ -78,8 +78,28 @@ const Home = () => {
   );
 
   // Determine if we should show sections or a single unified grid
-  // We show a single grid if a search query is active OR if the active tab is not All/Homes (e.g. Experiences/Services)
-  const showSections = !searchQuery && (activeTab === "All" || activeTab === "Homes");
+  // We show a single grid if a search query is active
+  const showSections = !searchQuery;
+
+  // Helper to format section headers depending on the active tab
+  const getSectionTitle = (baseType) => {
+    const tabName = activeTab.toLowerCase();
+    
+    if (tabName === "experiences") {
+      if (baseType === "kolkata") return "Popular experiences in Kolkata";
+      if (baseType === "puri") return "Available in Puri this weekend";
+      return "Recommended experiences";
+    }
+    if (tabName === "services") {
+      if (baseType === "kolkata") return "Popular services in Kolkata";
+      if (baseType === "puri") return "Available in Puri this weekend";
+      return "Recommended services";
+    }
+    // Default for 'all', 'homes', or any other value
+    if (baseType === "kolkata") return "Popular homes in Kolkata";
+    if (baseType === "puri") return "Available in Puri this weekend";
+    return "Recommended international stays";
+  };
 
   return (
     <main className="home-page-wrapper">
@@ -90,8 +110,8 @@ const Home = () => {
             <section className="home-carousel-section container">
               <div className="carousel-header">
                 <div className="carousel-title-group">
-                  <h2>Popular homes in Kolkata</h2>
-                  <button className="title-arrow-btn" aria-label="See all Kolkata homes">
+                  <h2>{getSectionTitle("kolkata")}</h2>
+                  <button className="title-arrow-btn" aria-label={`See all Kolkata ${activeTab.toLowerCase()}`}>
                     <ArrowRight size={16} />
                   </button>
                 </div>
@@ -129,8 +149,8 @@ const Home = () => {
             <section className="home-carousel-section container">
               <div className="carousel-header">
                 <div className="carousel-title-group">
-                  <h2>Available in Puri this weekend</h2>
-                  <button className="title-arrow-btn" aria-label="See all Puri homes">
+                  <h2>{getSectionTitle("puri")}</h2>
+                  <button className="title-arrow-btn" aria-label={`See all Puri ${activeTab.toLowerCase()}`}>
                     <ArrowRight size={16} />
                   </button>
                 </div>
@@ -168,8 +188,8 @@ const Home = () => {
             <section className="home-carousel-section container">
               <div className="carousel-header">
                 <div className="carousel-title-group">
-                  <h2>Recommended international stays</h2>
-                  <button className="title-arrow-btn" aria-label="See all international stays">
+                  <h2>{getSectionTitle("other")}</h2>
+                  <button className="title-arrow-btn" aria-label={`See all international ${activeTab.toLowerCase() === 'homes' || activeTab.toLowerCase() === 'all' ? 'stays' : activeTab.toLowerCase()}`}>
                     <ArrowRight size={16} />
                   </button>
                 </div>

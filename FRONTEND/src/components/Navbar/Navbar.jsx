@@ -4,41 +4,35 @@ import { Globe, Menu, User, Search, LogIn, UserPlus, HelpCircle } from "lucide-r
 import "./Navbar.css";
 
 // Custom premium SVGs matching image 2
+// Custom clean outline SVGs matching premium styling
 const GlobeIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="12" cy="12" r="10" fill="#F8F9FA" stroke="#8B5A2B" strokeWidth="1.5"/>
-    <path d="M12 2C14.5 5 16 8.5 16 12C16 15.5 14.5 19 12 22C9.5 19 8 15.5 8 12C8 8.5 9.5 5 12 2Z" stroke="#8B5A2B" strokeWidth="1"/>
-    <path d="M2.5 12H21.5" stroke="#8B5A2B" strokeWidth="1"/>
-    <path d="M12 2V22" stroke="#8B5A2B" strokeWidth="1"/>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <line x1="2" y1="12" x2="22" y2="12" />
+    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
   </svg>
 );
 
 const HomesIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    {/* Tree */}
-    <path d="M19 18H21M20 18V15M20 15C20.8 15 21.2 14.2 20.8 13.5C21.2 12.8 20.8 12 20 12C20 11.2 19.2 11.2 18.8 12C18.4 11.2 17.6 11.2 17.6 12C16.8 12 16.4 12.8 16.8 13.5C16.4 14.2 16.8 15 17.6 15H20Z" fill="#34A853" stroke="#2E7D32" strokeWidth="0.8"/>
-    {/* House */}
-    <path d="M4 18V10L10 5L16 10V18H4Z" fill="#E8EAED" stroke="#5F6368" strokeWidth="1.5"/>
-    <path d="M8 18V13H12V18H8Z" fill="#BDC1C6" stroke="#5F6368" strokeWidth="1.2"/>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    <polyline points="9 22 9 12 15 12 15 22" />
   </svg>
 );
 
 const ExperiencesIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 2C8 2 5 5 5 9C5 13 8 16 10 18H14C16 16 19 13 19 9C19 5 16 2 12 2Z" fill="#EA4335" stroke="#C5221F" strokeWidth="1.5"/>
-    <path d="M9 4C11 6 11 12 9 16" stroke="#FFFFFF" strokeWidth="1" strokeDasharray="1 1"/>
-    <path d="M15 4C13 6 13 12 15 16" stroke="#FFFFFF" strokeWidth="1" strokeDasharray="1 1"/>
-    <rect x="11" y="20" width="2" height="2" rx="0.5" fill="#8B5A2B" stroke="#5C3A21" strokeWidth="1"/>
-    <line x1="10" y1="18" x2="11" y2="20" stroke="#5C3A21" strokeWidth="0.8"/>
-    <line x1="14" y1="18" x2="13" y2="20" stroke="#5C3A21" strokeWidth="0.8"/>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7z" />
+    <line x1="9" y1="22" x2="15" y2="22" />
+    <path d="M8 9a4 4 0 0 0 8 0" />
   </svg>
 );
 
 const ServicesIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 6V3.5M12 3.5H10M12 3.5H14" stroke="#5F6368" strokeWidth="1.5" strokeLinecap="round"/>
-    <path d="M4 16C4 11 8 7 12 7C16 7 20 11 20 16H4Z" fill="#9AA0A6" stroke="#5F6368" strokeWidth="1.5"/>
-    <rect x="2" y="16" width="20" height="2.5" rx="1" fill="#3C4043" stroke="#3C4043" strokeWidth="1"/>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 6V3" />
+    <path d="M4 17a8 8 0 0 1 16 0" />
+    <line x1="2" y1="20" x2="22" y2="20" />
   </svg>
 );
 

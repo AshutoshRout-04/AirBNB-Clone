@@ -86,8 +86,7 @@
   border-bottom-color: var(--text-main);
 }
 
-.tab-item.active svg path,
-.tab-item.active svg circle {
+.tab-item.active svg * {
   stroke: var(--text-main);
 }
 
