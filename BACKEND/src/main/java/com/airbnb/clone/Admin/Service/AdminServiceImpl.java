@@ -1,6 +1,8 @@
 package com.airbnb.clone.Admin.Service;
 
 import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.airbnb.clone.Admin.Entity.Admin;
@@ -15,8 +17,9 @@ import lombok.RequiredArgsConstructor;
 public class AdminServiceImpl implements AdminService {
 
     
-
     private final AdminRepository adminRepository;
+
+    
     
     @Override
     public Admin createAdmin(Admin admin) {
@@ -45,10 +48,6 @@ public class AdminServiceImpl implements AdminService {
 
         if (updatedAdmin.getDepartment() != null) {
             admin.setDepartment(updatedAdmin.getDepartment());
-        }
-
-        if (updatedAdmin.getDesignation() != null) {
-            admin.setDesignation(updatedAdmin.getDesignation());
         }
 
         return adminRepository.save(admin);
