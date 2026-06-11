@@ -3,6 +3,7 @@ import { Search, Globe, Menu, User, Calendar, Heart, Shield, HelpCircle, Setting
 import { useToast } from "./Toast"
 
 export default function Header({
+  onSwitchToHost,
   onOpenHostModal,
   onOpenBookingsDrawer,
   onFocusSearch,
@@ -50,7 +51,7 @@ export default function Header({
         {/* Right: Switch to hosting | Avatar | Hamburger */}
         <div className="flex items-center gap-3">
           <button
-            onClick={onOpenHostModal}
+            onClick={onSwitchToHost}
             className="rounded-full px-3.5 py-2 text-xs font-bold hover:bg-muted text-foreground cursor-pointer hidden sm:block"
           >
             Switch to hosting
@@ -154,16 +155,16 @@ export default function Header({
 
                 <div className="border-t border-border/60 my-1" />
 
-                {/* Become a Host — with illustration */}
+                {/* Switch to Hosting — with illustration */}
                 <div className="px-1.5 py-1">
                   <button
-                    onClick={() => { setShowMenu(false); onOpenHostModal() }}
+                    onClick={() => { setShowMenu(false); onSwitchToHost() }}
                     className="flex w-full items-center justify-between gap-2 rounded-lg bg-muted/40 p-2.5 text-left hover:bg-muted transition text-foreground cursor-pointer"
                   >
                     <div className="max-w-[70%]">
-                      <span className="block text-xs font-bold">Become a host</span>
+                      <span className="block text-xs font-bold">Switch to hosting</span>
                       <span className="block text-[10px] text-muted-foreground leading-tight mt-0.5">
-                        It&apos;s easy to start hosting and earn extra income.
+                        Manage your listings, bookings, inbox, and performance.
                       </span>
                     </div>
                     <svg width="28" height="36" viewBox="0 0 30 40">

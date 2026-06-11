@@ -12,7 +12,7 @@ import BookingsDrawer from "../components/BookingsDrawer"
 import { getAllProperties } from "../services/PropertyService"
 import { useToast } from "../components/Toast"
 
-export default function Home() {
+export default function Home({ onSwitchToHost }) {
   const toast = useToast()
 
   const [properties, setProperties] = useState([])
@@ -121,6 +121,7 @@ export default function Home() {
       <div>
         {/* Header */}
         <Header
+          onSwitchToHost={onSwitchToHost}
           onOpenHostModal={() => setShowHostModal(true)}
           onOpenBookingsDrawer={() => setShowBookingsDrawer(true)}
           onFocusSearch={handleFocusSearch}
