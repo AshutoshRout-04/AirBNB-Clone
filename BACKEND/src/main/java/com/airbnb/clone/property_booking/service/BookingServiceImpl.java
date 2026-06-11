@@ -1,10 +1,9 @@
 package com.airbnb.clone.property_booking.service;
 
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.airbnb.clone.Guest.Entity.Guest;
@@ -19,14 +18,17 @@ import com.airbnb.clone.property_listing.entity.Property;
 
 @Service
 public class BookingServiceImpl implements BookingService {
-    @Autowired
-    private BookingRepository bookingRepository;
+    private final BookingRepository bookingRepository;
 
-    @Autowired
-    private Property_Repository propertyRepository;
+    private final Property_Repository propertyRepository;
 
-    @Autowired
-    private GuestRepository guestRepository;
+    private final GuestRepository guestRepository;
+
+    BookingServiceImpl(BookingRepository bookingRepository, Property_Repository propertyRepository, GuestRepository guestRepository) {
+        this.bookingRepository = bookingRepository;
+        this.propertyRepository = propertyRepository;
+        this.guestRepository = guestRepository;
+    }
     
     @Override
     public Booking createBooking(BookingRequestDto bookingDto) {
