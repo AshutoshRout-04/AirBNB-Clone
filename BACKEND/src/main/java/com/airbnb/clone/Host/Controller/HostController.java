@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/Host")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173")
 public class HostController {
 
     private final HostService hostService;
@@ -33,6 +34,14 @@ public class HostController {
 
         return ResponseEntity.ok(
                 hostService.getHostById(id));
+    }
+
+    @GetMapping("/getByUser/{userId}")
+    public ResponseEntity<Host> getHostByUserId(
+            @PathVariable Long userId) {
+
+        return ResponseEntity.ok(
+                hostService.getHostByUserId(userId));
     }
 
     @GetMapping("/getall")

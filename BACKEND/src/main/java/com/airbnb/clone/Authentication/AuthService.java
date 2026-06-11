@@ -1,8 +1,7 @@
 package com.airbnb.clone.Authentication;
 
 import org.springframework.security.core.Authentication;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
@@ -16,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthService {
 
-
+	
 	private final AuthenticationManager AuthManager;
 	
 	private final AuthUtil authutil;

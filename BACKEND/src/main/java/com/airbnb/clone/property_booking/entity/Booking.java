@@ -15,7 +15,6 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -39,7 +38,7 @@ public class Booking {
 
     private LocalDate checkOutDate;
 
-    private Double totalAmount;
+    private Float totalAmount;
 
     @Enumerated(EnumType.STRING)
     private BookingStatus status;

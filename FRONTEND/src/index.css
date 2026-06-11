@@ -1,9 +1,39 @@
-*{
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+@import "tailwindcss";
+
+@theme {
+  --color-background: #ffffff;
+  --color-foreground: #222222;
+  --color-primary: #ff385c;          /* Airbnb coral — NOT pure red */
+  --color-primary-hover: #e00b41;
+  --color-primary-foreground: #ffffff;
+  --color-muted: #f7f7f7;
+  --color-muted-foreground: #717171;
+  --color-border: #dddddd;
+  --color-card: #ffffff;
+  --shadow-card: 0 6px 16px rgba(0,0,0,0.12);
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
 }
 
-body{
-  font-family: Arial, sans-serif;
+body {
+  margin: 0;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
 }
+
+/* Hide scrollbar but keep functionality */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(100%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.animate-fade-in  { animation: fadeIn 0.2s ease both; }
+.animate-slide-in { animation: slideInRight 0.3s cubic-bezier(0.4,0,0.2,1) both; }

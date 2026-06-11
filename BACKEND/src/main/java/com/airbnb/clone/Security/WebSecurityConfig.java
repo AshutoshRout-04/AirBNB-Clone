@@ -1,58 +1,52 @@
 package com.airbnb.clone.Security;
 
 import com.airbnb.clone.JwtToken.AuthUtilFilter;
-import com.airbnb.clone.User.Entity.Role;
-import com.airbnb.clone.property_listing.controller.Property_Controller;
-
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @RequiredArgsConstructor
 public class WebSecurityConfig {
 
+    private final AuthUtilFilter authutilfilter;
 
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity httpsecurity) throws Exception {
 
-	private final AuthUtilFilter authutilfilter; 
-	
-	@Bean
-	public SecurityFilterChain securityFilterChain(HttpSecurity httpsecurity) throws Exception {
-		
-		httpsecurity
-		.csrf(csrfConfig->csrfConfig.disable())
-		.sessionManagement(sessionConfig->
-		sessionConfig.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-		.authorizeHttpRequests(auth->auth
-							.requestMatchers("/user/public/**","/auth/**").permitAll()
-							.requestMatchers("/Admin/**").hasRole("ADMIN")
-							.requestMatchers("/Guest/**").hasAnyRole("GUEST","ADMIN")
-							.requestMatchers("/Host/**").hasAnyRole("HOST","ADMIN")
-							.anyRequest().authenticated())
-		.addFilterBefore(authutilfilter,UsernamePasswordAuthenticationFilter.class);
-					
-		
-		return httpsecurity.build();
-	}
-	
-	@Bean
-	AuthenticationManager authenticationManager (AuthenticationConfiguration configuration) throws Exception {
-		return configuration.getAuthenticationManager();
-	}
-	
-	
-	@Bean
-	public PasswordEncoder passwordEncoder() {
-	    return new BCryptPasswordEncoder();
-	}
+        httpsecurity
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth ->
+                auth.anyRequest().permitAll()
+            );
+
+        // TEMPORARILY COMMENT THIS
+        // .addFilterBefore(authutilfilter,
+        //         UsernamePasswordAuthenticationFilter.class);
+
+        return httpsecurity.build();
+    }
+
+    @Bean
+    AuthenticationManager authenticationManager(
+            AuthenticationConfiguration configuration)
+            throws Exception {
+
+        return configuration.getAuthenticationManager();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 }

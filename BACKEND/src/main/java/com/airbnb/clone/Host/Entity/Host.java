@@ -46,6 +46,7 @@ public class Host {
    private User user;
     
     @OneToMany(mappedBy = "Host_Id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<Property> properties;
     
 }

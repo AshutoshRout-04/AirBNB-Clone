@@ -47,6 +47,7 @@ public class Guest {
    private User user;
    
    @OneToMany(mappedBy="guest")
+   @com.fasterxml.jackson.annotation.JsonIgnore
    private List<Booking> bookings;
    
 }
