@@ -10,6 +10,8 @@ public interface HostService {
 
     Host getHostById(Long id);
 
+    Host getHostByUserId(Long userId);
+
     List<Host> getAllHosts();
 
     Host updateHost(Long id, Host updatedHost);

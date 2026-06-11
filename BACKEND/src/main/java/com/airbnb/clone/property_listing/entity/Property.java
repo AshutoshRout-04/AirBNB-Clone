@@ -68,6 +68,7 @@ public class Property {
     
     // Added Property mapping
     @OneToMany(mappedBy="property")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<Booking> Bookings;
     
     

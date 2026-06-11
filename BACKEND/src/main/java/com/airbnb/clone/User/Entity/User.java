@@ -44,9 +44,11 @@ public class User implements UserDetails  {
     private String contact;
     
     @OneToOne(mappedBy = "user")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Host host;
     
     @OneToOne(mappedBy = "user")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Guest guest;
 
 	@Override

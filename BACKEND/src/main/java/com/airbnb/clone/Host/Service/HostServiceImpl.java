@@ -36,6 +36,12 @@ public class HostServiceImpl implements HostService {
     }
 
     @Override
+    public Host getHostByUserId(Long userId) {
+        return hostRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Host not found for user id: " + userId));
+    }
+
+    @Override
     public List<Host> getAllHosts() {
 
         return hostRepository.findAll();

@@ -25,7 +25,6 @@ public class BookingController {
 
         @PostMapping
         public ResponseEntity<Booking> createBooking(@RequestBody BookingRequestDto bookingDto) {
-                System.out.println("========== BOOKING CONTROLLER HIT ==========");
                 return new ResponseEntity<>(bookingService.createBooking(bookingDto),HttpStatus.CREATED);
         }
 

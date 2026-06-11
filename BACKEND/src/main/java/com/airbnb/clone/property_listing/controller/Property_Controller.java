@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.airbnb.clone.Host.Entity.Host;
+import com.airbnb.clone.Host.Repository.HostRepository;
 import com.airbnb.clone.property_listing.entity.Property;
 import com.airbnb.clone.property_listing.service.Property_Service;
 
@@ -23,6 +25,19 @@ public class Property_Controller {
     @Autowired
     private Property_Service propertyService;
 
+    @Autowired
+    private HostRepository hostRepository;
+
+    // Create a property linked to a specific host
+    @PostMapping("/addProperty/{hostId}")
+    public Property addPropertyForHost(@PathVariable Long hostId, @RequestBody Property property) {
+        Host host = hostRepository.findById(hostId)
+                .orElseThrow(() -> new RuntimeException("Host not found: " + hostId));
+        property.setHost_Id(host);
+        return propertyService.addProperty(property);
+    }
+
+    // Create a property without host (legacy / guest-mode fallback)
     @PostMapping("/addProperty")
     public Property addProperty(@RequestBody Property property) {
         return propertyService.addProperty(property);
