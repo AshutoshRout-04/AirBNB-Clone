@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home          from "./pages/Home";
 import HostDashboard from "./pages/HostDashboard";
 import AdminApp      from "./pages/admin/AdminApp";
+import Profile       from "./pages/Profile";
 
 function MainApp() {
   const [mode, setMode] = useState("guest");
@@ -18,6 +19,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/admin/*" element={<AdminApp />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/*"       element={<MainApp />} />
       </Routes>
     </BrowserRouter>

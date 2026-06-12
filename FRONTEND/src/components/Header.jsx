@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react"
+import { useNavigate } from "react-router-dom"
 import { Search, Globe, Menu, User, Calendar, Heart, Shield, HelpCircle, Settings, MessageSquare, Bell, LogOut, Users, UserPlus } from "lucide-react"
 import { useToast } from "./Toast"
 
@@ -13,6 +14,7 @@ export default function Header({
   const [showMenu, setShowMenu] = useState(false)
   const menuRef = useRef(null)
   const toast = useToast()
+  const navigate = useNavigate()
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -57,11 +59,12 @@ export default function Header({
             Switch to hosting
           </button>
 
-          {/* Beige avatar circle */}
+          {/* Pink/Purple avatar circle matching Profile images */}
           <button
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fdecd2] text-[#784e1b] font-bold text-sm border border-[#f3d9b4] shadow-sm hover:shadow transition"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-pink-100 text-pink-700 font-bold text-sm border border-pink-200 shadow-sm hover:shadow-md hover:scale-105 transition cursor-pointer"
             type="button"
-            onClick={() => toast({ type: "info", title: "Profile", message: "Logged in as Ashutosh Rout." })}
+            onClick={() => navigate("/profile")}
+            title="View Profile"
           >
             A
           </button>
@@ -108,7 +111,7 @@ export default function Header({
 
                 {/* Profile */}
                 <button
-                  onClick={() => { setShowMenu(false); toast({ type: "info", title: "Profile", message: "Logged in as Ashutosh Rout." }) }}
+                  onClick={() => { setShowMenu(false); navigate("/profile"); }}
                   className="flex w-full items-center gap-2.5 px-4 py-2.5 text-xs font-semibold hover:bg-muted text-foreground cursor-pointer"
                 >
                   <User size={14} />
