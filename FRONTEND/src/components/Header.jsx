@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { Search, Globe, Menu, User, Calendar, Heart, Shield, HelpCircle, Settings, MessageSquare, Bell, LogOut, Users, UserPlus } from "lucide-react"
 import { useToast } from "./Toast"
+import { useAuth } from "./LoginModal"
 
 export default function Header({
   onSwitchToHost,
@@ -15,6 +16,7 @@ export default function Header({
   const menuRef = useRef(null)
   const toast = useToast()
   const navigate = useNavigate()
+  const { user, isLoggedIn, openLogin, logout } = useAuth()
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -59,15 +61,26 @@ export default function Header({
             Switch to hosting
           </button>
 
-          {/* Pink/Purple avatar circle matching Profile images */}
-          <button
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-pink-100 text-pink-700 font-bold text-sm border border-pink-200 shadow-sm hover:shadow-md hover:scale-105 transition cursor-pointer"
-            type="button"
-            onClick={() => navigate("/profile")}
-            title="View Profile"
-          >
-            A
-          </button>
+          {/* Dynamic Avatar Circle */}
+          {isLoggedIn ? (
+            <button
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-pink-100 text-pink-700 font-bold text-sm border border-pink-200 shadow-sm hover:shadow-md hover:scale-105 transition cursor-pointer select-none"
+              type="button"
+              onClick={() => navigate("/profile")}
+              title="View Profile"
+            >
+              {user.name ? user.name.charAt(0).toUpperCase() : "A"}
+            </button>
+          ) : (
+            <button
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-500 font-bold text-sm border border-gray-250 shadow-sm hover:shadow-md hover:scale-105 transition cursor-pointer select-none"
+              type="button"
+              onClick={openLogin}
+              title="Log in / Sign up"
+            >
+              <User size={15} />
+            </button>
+          )}
 
           {/* Hamburger menu */}
           <div className="relative" ref={menuRef}>
@@ -81,134 +94,173 @@ export default function Header({
 
             {showMenu && (
               <div className="absolute right-0 mt-2 w-64 rounded-xl border border-border bg-card py-2 shadow-xl z-50 text-left text-foreground">
+                {isLoggedIn ? (
+                  <>
+                    {/* Logged In Dropdown Items */}
+                    {/* Wishlists */}
+                    <button
+                      onClick={() => { setShowMenu(false); onToggleWishlist() }}
+                      className={`flex w-full items-center gap-2.5 px-4 py-2.5 text-xs font-semibold hover:bg-muted cursor-pointer ${showWishlistOnly ? "text-primary" : "text-foreground"}`}
+                    >
+                      <Heart size={14} className={showWishlistOnly ? "fill-primary text-primary" : ""} />
+                      <span>Wishlists {showWishlistOnly && <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">Active</span>}</span>
+                    </button>
 
-                {/* Wishlists */}
-                <button
-                  onClick={() => { setShowMenu(false); onToggleWishlist() }}
-                  className={`flex w-full items-center gap-2.5 px-4 py-2.5 text-xs font-semibold hover:bg-muted cursor-pointer ${showWishlistOnly ? "text-primary" : "text-foreground"}`}
-                >
-                  <Heart size={14} className={showWishlistOnly ? "fill-primary text-primary" : ""} />
-                  <span>Wishlists {showWishlistOnly && <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">Active</span>}</span>
-                </button>
+                    {/* Trips */}
+                    <button
+                      onClick={() => { setShowMenu(false); onOpenBookingsDrawer() }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-xs font-semibold hover:bg-muted text-foreground cursor-pointer"
+                    >
+                      <Calendar size={14} />
+                      <span>Trips</span>
+                    </button>
 
-                {/* Trips */}
-                <button
-                  onClick={() => { setShowMenu(false); onOpenBookingsDrawer() }}
-                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-xs font-semibold hover:bg-muted text-foreground cursor-pointer"
-                >
-                  <Calendar size={14} />
-                  <span>Trips</span>
-                </button>
+                    {/* Messages */}
+                    <button
+                      onClick={() => { setShowMenu(false); toast({ type: "info", title: "Messages", message: "No new messages in your inbox." }) }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-xs font-semibold hover:bg-muted text-foreground cursor-pointer"
+                    >
+                      <MessageSquare size={14} />
+                      <span>Messages</span>
+                    </button>
 
-                {/* Messages */}
-                <button
-                  onClick={() => { setShowMenu(false); toast({ type: "info", title: "Messages", message: "No new messages in your inbox." }) }}
-                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-xs font-semibold hover:bg-muted text-foreground cursor-pointer"
-                >
-                  <MessageSquare size={14} />
-                  <span>Messages</span>
-                </button>
+                    {/* Profile */}
+                    <button
+                      onClick={() => { setShowMenu(false); navigate("/profile"); }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-xs font-semibold hover:bg-muted text-foreground cursor-pointer"
+                    >
+                      <User size={14} />
+                      <span>Profile</span>
+                    </button>
 
-                {/* Profile */}
-                <button
-                  onClick={() => { setShowMenu(false); navigate("/profile"); }}
-                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-xs font-semibold hover:bg-muted text-foreground cursor-pointer"
-                >
-                  <User size={14} />
-                  <span>Profile</span>
-                </button>
+                    <div className="border-t border-border/60 my-1" />
 
-                <div className="border-t border-border/60 my-1" />
+                    {/* Notifications */}
+                    <button
+                      onClick={() => { setShowMenu(false); toast({ type: "success", title: "Notifications", message: "You're all caught up! No new notifications." }) }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2 text-xs hover:bg-muted text-foreground/80 cursor-pointer"
+                    >
+                      <Bell size={14} />
+                      <span>Notifications</span>
+                    </button>
 
-                {/* Notifications */}
-                <button
-                  onClick={() => { setShowMenu(false); toast({ type: "success", title: "Notifications", message: "You're all caught up! No new notifications." }) }}
-                  className="flex w-full items-center gap-2.5 px-4 py-2 text-xs hover:bg-muted text-foreground/80 cursor-pointer"
-                >
-                  <Bell size={14} />
-                  <span>Notifications</span>
-                </button>
+                    {/* Account Settings */}
+                    <button
+                      onClick={() => { setShowMenu(false); toast({ type: "info", title: "Account settings", message: "Configuration is managed by your administrator." }) }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2 text-xs hover:bg-muted text-foreground/80 cursor-pointer"
+                    >
+                      <Settings size={14} />
+                      <span>Account settings</span>
+                    </button>
 
-                {/* Account Settings */}
-                <button
-                  onClick={() => { setShowMenu(false); toast({ type: "info", title: "Account settings", message: "Configuration is managed by your administrator." }) }}
-                  className="flex w-full items-center gap-2.5 px-4 py-2 text-xs hover:bg-muted text-foreground/80 cursor-pointer"
-                >
-                  <Settings size={14} />
-                  <span>Account settings</span>
-                </button>
+                    {/* Languages & Currency */}
+                    <button
+                      onClick={() => { setShowMenu(false); toast({ type: "info", title: "Language & Currency", message: "Language: English (IN) · Currency: INR (₹)" }) }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2 text-xs hover:bg-muted text-foreground/80 cursor-pointer"
+                    >
+                      <Globe size={14} />
+                      <span>Languages &amp; currency</span>
+                    </button>
 
-                {/* Languages & Currency */}
-                <button
-                  onClick={() => { setShowMenu(false); toast({ type: "info", title: "Language & Currency", message: "Language: English (IN) · Currency: INR (₹)" }) }}
-                  className="flex w-full items-center gap-2.5 px-4 py-2 text-xs hover:bg-muted text-foreground/80 cursor-pointer"
-                >
-                  <Globe size={14} />
-                  <span>Languages &amp; currency</span>
-                </button>
+                    {/* Help Centre */}
+                    <button
+                      onClick={() => { setShowMenu(false); toast({ type: "info", title: "Help Centre", message: "Contact us at support@staybnb.com for assistance." }) }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2 text-xs hover:bg-muted text-foreground/80 cursor-pointer"
+                    >
+                      <HelpCircle size={14} />
+                      <span>Help Centre</span>
+                    </button>
 
-                {/* Help Centre */}
-                <button
-                  onClick={() => { setShowMenu(false); toast({ type: "info", title: "Help Centre", message: "Contact us at support@staybnb.com for assistance." }) }}
-                  className="flex w-full items-center gap-2.5 px-4 py-2 text-xs hover:bg-muted text-foreground/80 cursor-pointer"
-                >
-                  <HelpCircle size={14} />
-                  <span>Help Centre</span>
-                </button>
+                    <div className="border-t border-border/60 my-1" />
 
-                <div className="border-t border-border/60 my-1" />
-
-                {/* Switch to Hosting — with illustration */}
-                <div className="px-1.5 py-1">
-                  <button
-                    onClick={() => { setShowMenu(false); onSwitchToHost() }}
-                    className="flex w-full items-center justify-between gap-2 rounded-lg bg-muted/40 p-2.5 text-left hover:bg-muted transition text-foreground cursor-pointer"
-                  >
-                    <div className="max-w-[70%]">
-                      <span className="block text-xs font-bold">Switch to hosting</span>
-                      <span className="block text-[10px] text-muted-foreground leading-tight mt-0.5">
-                        Manage your listings, bookings, inbox, and performance.
-                      </span>
+                    {/* Switch to Hosting */}
+                    <div className="px-1.5 py-1">
+                      <button
+                        onClick={() => { setShowMenu(false); onSwitchToHost() }}
+                        className="flex w-full items-center justify-between gap-2 rounded-lg bg-muted/40 p-2.5 text-left hover:bg-muted transition text-foreground cursor-pointer"
+                      >
+                        <div className="max-w-[70%]">
+                          <span className="block text-xs font-bold">Switch to hosting</span>
+                          <span className="block text-[10px] text-muted-foreground leading-tight mt-0.5">
+                            Manage your listings, bookings, inbox, and performance.
+                          </span>
+                        </div>
+                        <svg width="28" height="36" viewBox="0 0 30 40">
+                          <circle cx="15" cy="8" r="4.5" fill="#fbc531" />
+                          <path d="M10,14 Q15,12 20,14 L18,25 L12,25 Z" fill="#eb4d4b" />
+                          <path d="M12,25 L11,36 L14,36 L14,26 Z" fill="#2f3542" />
+                          <path d="M18,25 L19,36 L16,36 L16,26 Z" fill="#2f3542" />
+                          <path d="M8,15 C9,17 11,21 12,22" stroke="#fbc531" strokeWidth="1.5" fill="none" />
+                          <path d="M22,15 C21,17 19,21 18,22" stroke="#fbc531" strokeWidth="1.5" fill="none" />
+                        </svg>
+                      </button>
                     </div>
-                    <svg width="28" height="36" viewBox="0 0 30 40">
-                      <circle cx="15" cy="8" r="4.5" fill="#fbc531" />
-                      <path d="M10,14 Q15,12 20,14 L18,25 L12,25 Z" fill="#eb4d4b" />
-                      <path d="M12,25 L11,36 L14,36 L14,26 Z" fill="#2f3542" />
-                      <path d="M18,25 L19,36 L16,36 L16,26 Z" fill="#2f3542" />
-                      <path d="M8,15 C9,17 11,21 12,22" stroke="#fbc531" strokeWidth="1.5" fill="none" />
-                      <path d="M22,15 C21,17 19,21 18,22" stroke="#fbc531" strokeWidth="1.5" fill="none" />
-                    </svg>
-                  </button>
-                </div>
 
-                {/* Refer a Host */}
-                <button
-                  onClick={() => { setShowMenu(false); toast({ type: "success", title: "Refer a host", message: "Your referral link has been copied to clipboard!" }) }}
-                  className="flex w-full items-center gap-2.5 px-4 py-2 text-xs hover:bg-muted text-foreground/80 cursor-pointer"
-                >
-                  <UserPlus size={14} />
-                  <span>Refer a host</span>
-                </button>
+                    {/* Refer a Host */}
+                    <button
+                      onClick={() => { setShowMenu(false); toast({ type: "success", title: "Refer a host", message: "Your referral link has been copied to clipboard!" }) }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2 text-xs hover:bg-muted text-foreground/80 cursor-pointer"
+                    >
+                      <UserPlus size={14} />
+                      <span>Refer a host</span>
+                    </button>
 
-                {/* Find a co-host */}
-                <button
-                  onClick={() => { setShowMenu(false); toast({ type: "info", title: "Find a co-host", message: "Browse experienced co-hosts in your neighbourhood." }) }}
-                  className="flex w-full items-center gap-2.5 px-4 py-2 text-xs hover:bg-muted text-foreground/80 cursor-pointer"
-                >
-                  <Users size={14} />
-                  <span>Find a co-host</span>
-                </button>
+                    {/* Find a co-host */}
+                    <button
+                      onClick={() => { setShowMenu(false); toast({ type: "info", title: "Find a co-host", message: "Browse experienced co-hosts in your neighbourhood." }) }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2 text-xs hover:bg-muted text-foreground/80 cursor-pointer"
+                    >
+                      <Users size={14} />
+                      <span>Find a co-host</span>
+                    </button>
 
-                <div className="border-t border-border/60 my-1" />
+                    <div className="border-t border-border/60 my-1" />
 
-                {/* Log out */}
-                <button
-                  onClick={() => { setShowMenu(false); toast({ type: "warning", title: "Logged out", message: "You have been signed out of staybnb." }) }}
-                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-xs font-semibold hover:bg-muted text-primary cursor-pointer"
-                >
-                  <LogOut size={14} />
-                  <span>Log out</span>
-                </button>
+                    {/* Log out */}
+                    <button
+                      onClick={() => { setShowMenu(false); logout(); }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-xs font-semibold hover:bg-muted text-primary cursor-pointer"
+                    >
+                      <LogOut size={14} />
+                      <span>Log out</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {/* Logged Out Dropdown Items */}
+                    <button
+                      onClick={() => { setShowMenu(false); openLogin(); }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-xs font-bold hover:bg-muted text-gray-900 cursor-pointer"
+                    >
+                      <User size={14} className="text-gray-700" />
+                      <span>Sign up</span>
+                    </button>
+                    <button
+                      onClick={() => { setShowMenu(false); openLogin(); }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-xs font-semibold hover:bg-muted text-gray-700 cursor-pointer"
+                    >
+                      <User size={14} className="text-gray-500" />
+                      <span>Log in</span>
+                    </button>
+
+                    <div className="border-t border-border/60 my-1" />
+
+                    <button
+                      onClick={() => { setShowMenu(false); openLogin(); }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-xs hover:bg-muted text-gray-700 cursor-pointer"
+                    >
+                      <Globe size={14} />
+                      <span>Become a host</span>
+                    </button>
+                    <button
+                      onClick={() => { setShowMenu(false); toast({ type: "info", title: "Help Centre", message: "Contact us at support@staybnb.com for assistance." }) }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2 text-xs hover:bg-muted text-gray-700 cursor-pointer"
+                    >
+                      <HelpCircle size={14} />
+                      <span>Help Centre</span>
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
