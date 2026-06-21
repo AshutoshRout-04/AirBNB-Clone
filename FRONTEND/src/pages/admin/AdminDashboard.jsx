@@ -7,17 +7,7 @@ import {
   Building2, ShieldCheck, Zap,
 } from "lucide-react";
 
-// ── Mock activity feed ─────────────────────────────────────────────────────
-const ACTIVITY_FEED = [
-  { id: 1, icon: UserPlus,    color: "#00a699", bg: "#e6f7f6", text: "New guest registered: Rohit Sharma",         time: "2 min ago" },
-  { id: 2, icon: CalendarCheck,color:"#ff385c", bg: "#fff0f2", text: "Booking #BK1242 confirmed — Goa Villa",      time: "8 min ago" },
-  { id: 3, icon: AlertCircle, color: "#c026d3", bg: "#fdf0f8", text: "Dispute TKT008 escalated — Safety concern",  time: "15 min ago"},
-  { id: 4, icon: Building2,   color: "#fc642d", bg: "#fff8e7", text: "New listing pending review — Mumbai Penthouse",time:"32 min ago"},
-  { id: 5, icon: CreditCard,  color: "#00a699", bg: "#e6f7f6", text: "Payout ₹13,500 processed to Sneha Rao",     time: "1 hr ago"  },
-  { id: 6, icon: ShieldCheck, color: "#00a699", bg: "#e6f7f6", text: "KYC approved for Priya Patel",              time: "2 hr ago"  },
-  { id: 7, icon: Star,        color: "#fc642d", bg: "#fff8e7", text: "New review posted — ★4.9 Forest Treehouse",  time: "3 hr ago"  },
-  { id: 8, icon: AlertCircle, color: "#ff385c", bg: "#fff0f2", text: "Ticket TKT003 reopened — Refund not received",time:"4 hr ago" },
-];
+// Removed mock activity feed, will generate dynamically
 
 // ── Quick actions ──────────────────────────────────────────────────────────
 const QUICK_ACTIONS = [
@@ -60,27 +50,34 @@ function StatCard({ label, value, icon: Icon, color, bg, loading }) {
 
 export default function AdminDashboard({ onNavigate }) {
   const [counts,   setCounts]   = useState({ guests: 0, hosts: 0, properties: 0, bookings: 0 });
+  const [data,     setData]     = useState({ guests: [], hosts: [], properties: [], bookings: [] });
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState("");
   const [spinning, setSpinning] = useState(false);
 
-  // Mission control — mock numbers (friend replaces with API)
+  // Mission control dynamically generated from backend data
   const mission = [
-    { label: "Open Disputes",      value: 4, color: "#ff385c", bg: "#fff0f2" },
-    { label: "Pending Listings",   value: 3, color: "#fc642d", bg: "#fff8e7" },
-    { label: "KYC Awaiting",       value: 6, color: "#c026d3", bg: "#fdf0f8" },
-    { label: "Unpaid Payouts",     value: 2, color: "#00a699", bg: "#e6f7f6" },
+    { label: "Open Disputes",      value: 0, color: "#ff385c", bg: "#fff0f2" },
+    { label: "Pending Listings",   value: data.properties.filter(p => !p.available).length, color: "#fc642d", bg: "#fff8e7" },
+    { label: "KYC Awaiting",       value: data.hosts.filter(h => h.verified === false).length, color: "#c026d3", bg: "#fdf0f8" },
+    { label: "Unpaid Payouts",     value: 0, color: "#00a699", bg: "#e6f7f6" },
   ];
 
   const fetchAll = async () => {
     setLoading(true); setSpinning(true); setError("");
     try {
       const [g, h, p, b] = await Promise.all([getGuests(), getHosts(), getProperties(), getBookings()]);
+      const guests = g.data || [];
+      const hosts = h.data || [];
+      const properties = p.data || [];
+      const bookings = b.data || [];
+
+      setData({ guests, hosts, properties, bookings });
       setCounts({
-        guests:     (g.data || []).length,
-        hosts:      (h.data || []).length,
-        properties: (p.data || []).length,
-        bookings:   (b.data || []).length,
+        guests:     guests.length,
+        hosts:      hosts.length,
+        properties: properties.length,
+        bookings:   bookings.length,
       });
     } catch {
       setError("Cannot reach the backend. Make sure Spring Boot is running on port 8086.");
@@ -94,6 +91,28 @@ export default function AdminDashboard({ onNavigate }) {
 
   const now     = new Date();
   const dateStr = now.toLocaleDateString("en-IN", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+
+  const recentActivities = [];
+  if (data.guests.length > 0) {
+    const lastGuest = data.guests[data.guests.length - 1];
+    recentActivities.push({ id: `g-${lastGuest.id}`, icon: UserPlus, color: "#00a699", bg: "#e6f7f6", text: `New guest registered: ${lastGuest.user?.fullname || 'Unknown'}`, time: "Recent" });
+  }
+  if (data.bookings.length > 0) {
+    const lastBooking = data.bookings[data.bookings.length - 1];
+    recentActivities.push({ id: `b-${lastBooking.id}`, icon: CalendarCheck, color: "#ff385c", bg: "#fff0f2", text: `Booking #${lastBooking.id} confirmed`, time: "Recent" });
+  }
+  if (data.properties.length > 0) {
+    const lastProp = data.properties[data.properties.length - 1];
+    recentActivities.push({ id: `p-${lastProp.id}`, icon: Building2, color: "#fc642d", bg: "#fff8e7", text: `New listing: ${lastProp.title}`, time: "Recent" });
+  }
+  if (data.hosts.length > 0) {
+    const lastHost = data.hosts[data.hosts.length - 1];
+    recentActivities.push({ id: `h-${lastHost.id}`, icon: ShieldCheck, color: "#00a699", bg: "#e6f7f6", text: `Host profile created for ${lastHost.user?.fullname || 'User'}`, time: "Recent" });
+  }
+
+  const ACTIVITY_FEED = recentActivities.length > 0 ? recentActivities : [
+    { id: 'empty', icon: Activity, color: "#aaaaaa", bg: "#f7f7f7", text: "No recent activity found", time: "" }
+  ];
 
   return (
     <div style={{ padding: "32px 40px", maxWidth: 1200, boxSizing: "border-box" }}>

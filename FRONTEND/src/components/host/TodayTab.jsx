@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react"
 import { Calendar, User, MessageSquare, Phone, StickyNote, Bell, CheckCircle2, ChevronRight, RefreshCw, Plus, Trash2 } from "lucide-react"
-import { getAllBookings } from "../../services/BookingService"
+import { getAllBookings, updateBooking, getBookingsByHostId } from "../../services/BookingService"
 import { getPropertyImages } from "../../services/ImageHelper"
 import { useToast } from "../Toast"
+import { useAuth } from "../LoginModal"
 
 export default function TodayTab({ onSwitchTab, onNavigateToMessage }) {
   const toast = useToast()
+  const { user } = useAuth()
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(false)
   const [activeToggle, setActiveToggle] = useState("upcoming") // 'current' or 'upcoming'
@@ -15,91 +17,47 @@ export default function TodayTab({ onSwitchTab, onNavigateToMessage }) {
   const [showAllReservations, setShowAllReservations] = useState(false)
   const [revealedPhones, setRevealedPhones] = useState({}) // bookingId -> boolean
 
-  // Load private notes from localStorage
+  const [hostId, setHostId] = useState(null)
+
+  // Load bookings from backend on mount
   useEffect(() => {
-    try {
-      const storedNotes = JSON.parse(localStorage.getItem("staybnb_host_notes") || "{}")
-      setNotes(storedNotes)
-    } catch (_) {}
-    fetchBookings()
+    const storedHostId = localStorage.getItem("staybnb_host_id")
+    if (storedHostId) {
+      const parsedId = parseInt(storedHostId)
+      setHostId(parsedId)
+      fetchBookings(parsedId)
+    } else {
+      fetchBookings()
+    }
   }, [])
 
-  const fetchBookings = async () => {
+  const fetchBookings = async (id) => {
     setLoading(true)
     try {
-      const response = await getAllBookings()
-      setBookings(response.data || [])
+      const currentHostId = id || hostId
+      const response = currentHostId 
+        ? await getBookingsByHostId(currentHostId)
+        : await getAllBookings()
+      const fetchedBookings = response.data || []
+      setBookings(fetchedBookings)
+
+      // Initialize notes from the booking objects
+      const notesMap = {}
+      fetchedBookings.forEach(b => {
+        if (b.bookingId && b.privateNotes) {
+          notesMap[b.bookingId] = b.privateNotes
+        }
+      })
+      setNotes(notesMap)
     } catch (err) {
       console.error("Failed to fetch bookings in TodayTab:", err)
-      // Populate with high-quality fallback/mock bookings if backend is empty/error
       setBookings([])
     } finally {
       setLoading(false)
     }
   };
 
-  // Safe mock bookings for a rich interface if backend is empty
-  const mockBookings = [
-    {
-      bookingId: 101,
-      checkInDate: "2026-06-12",
-      checkOutDate: "2026-06-18",
-      totalAmount: 12500,
-      status: "CONFIRMED",
-      guest: {
-        id: 1,
-        user: { name: "Aarav Sharma", email: "aarav@gmail.com" },
-        profileImage: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=120&h=120&q=80",
-        averageRating: 4.9
-      },
-      property: {
-        id: 1,
-        title: "Sunset Beachfront Villa",
-        location: "Goa, India",
-        pricePerNight: 2500,
-      }
-    },
-    {
-      bookingId: 102,
-      checkInDate: "2026-06-10",
-      checkOutDate: "2026-06-14",
-      totalAmount: 18000,
-      status: "CONFIRMED",
-      guest: {
-        id: 2,
-        user: { name: "Ananya Iyer", email: "ananya@gmail.com" },
-        profileImage: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&h=120&q=80",
-        averageRating: 4.8
-      },
-      property: {
-        id: 2,
-        title: "Cozy Pine Cabin & Spa",
-        location: "Manali, Himachal Pradesh",
-        pricePerNight: 4500,
-      }
-    },
-    {
-      bookingId: 103,
-      checkInDate: "2026-06-22",
-      checkOutDate: "2026-06-25",
-      totalAmount: 9600,
-      status: "CONFIRMED",
-      guest: {
-        id: 3,
-        user: { name: "Ryan Reynolds", email: "ryan@gmail.com" },
-        profileImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&h=120&q=80",
-        averageRating: 5.0
-      },
-      property: {
-        id: 3,
-        title: "Modern Skyline Loft",
-        location: "Mumbai, Maharashtra",
-        pricePerNight: 3200,
-      }
-    }
-  ]
-
-  const displayBookings = bookings.length > 0 ? bookings : mockBookings
+  const displayBookings = bookings
 
   // Filter based on dates compared to current local time (2026-06-11)
   const currentDate = new Date("2026-06-11")
@@ -122,33 +80,66 @@ export default function TodayTab({ onSwitchTab, onNavigateToMessage }) {
     setNoteText(notes[booking.bookingId] || "")
   }
 
-  const saveNote = () => {
+  const saveNote = async () => {
     if (!selectedBookingForNote) return
-    const updatedNotes = { ...notes, [selectedBookingForNote.bookingId]: noteText }
-    setNotes(updatedNotes)
-    localStorage.setItem("staybnb_host_notes", JSON.stringify(updatedNotes))
-    toast({
-      type: "success",
-      title: "Note Saved",
-      message: `Private note updated for ${selectedBookingForNote.guest?.user?.name || "Guest"}.`,
-      duration: 3000,
-    })
-    setSelectedBookingForNote(null)
+    try {
+      const payload = {
+        ...selectedBookingForNote,
+        privateNotes: noteText
+      }
+      await updateBooking(selectedBookingForNote.bookingId, payload)
+      
+      const updatedNotes = { ...notes, [selectedBookingForNote.bookingId]: noteText }
+      setNotes(updatedNotes)
+      toast({
+        type: "success",
+        title: "Note Saved",
+        message: `Private note updated for ${selectedBookingForNote.guest?.user?.name || "Guest"}.`,
+        duration: 3000,
+      })
+      setSelectedBookingForNote(null)
+      fetchBookings()
+    } catch (err) {
+      console.error(err)
+      toast({
+        type: "error",
+        title: "Error saving note",
+        message: "Could not save private note to the database."
+      })
+    }
   }
 
-  const deleteNote = (bookingId) => {
-    const updatedNotes = { ...notes }
-    delete updatedNotes[bookingId]
-    setNotes(updatedNotes)
-    localStorage.setItem("staybnb_host_notes", JSON.stringify(updatedNotes))
-    toast({
-      type: "info",
-      title: "Note Deleted",
-      message: "Private note has been removed.",
-      duration: 3000,
-    })
-    if (selectedBookingForNote && selectedBookingForNote.bookingId === bookingId) {
-      setNoteText("")
+  const deleteNote = async (bookingId) => {
+    try {
+      const targetBooking = bookings.find(b => b.bookingId === bookingId)
+      if (!targetBooking) return
+      
+      const payload = {
+        ...targetBooking,
+        privateNotes: null
+      }
+      await updateBooking(bookingId, payload)
+
+      const updatedNotes = { ...notes }
+      delete updatedNotes[bookingId]
+      setNotes(updatedNotes)
+      toast({
+        type: "info",
+        title: "Note Deleted",
+        message: "Private note has been removed.",
+        duration: 3000,
+      })
+      if (selectedBookingForNote && selectedBookingForNote.bookingId === bookingId) {
+        setNoteText("")
+      }
+      fetchBookings()
+    } catch (err) {
+      console.error(err)
+      toast({
+        type: "error",
+        title: "Error deleting note",
+        message: "Could not remove private note from the database."
+      })
     }
   }
 
@@ -210,7 +201,7 @@ export default function TodayTab({ onSwitchTab, onNavigateToMessage }) {
       {/* Welcome banner */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-linear-to-r from-neutral-900 to-neutral-800 p-6 rounded-2xl text-white shadow-lg">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Welcome back, Ashutosh</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Welcome back, {user?.name || "Host"}</h2>
           <p className="text-neutral-400 text-xs mt-1">Today is Thursday, June 11, 2026. Here is what's happening with your properties.</p>
         </div>
         <div className="flex gap-2">
@@ -277,11 +268,11 @@ export default function TodayTab({ onSwitchTab, onNavigateToMessage }) {
                     <div className="flex items-start gap-3 md:w-1/3 shrink-0">
                       <img 
                         src={res.guest?.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&h=80&q=80"} 
-                        alt={res.guest?.user?.name} 
+                        alt={res.guest?.user?.fullname || res.guest?.user?.name} 
                         className="h-12 w-12 rounded-full object-cover border border-border"
                       />
                       <div className="min-w-0">
-                        <span className="block font-bold text-sm text-foreground truncate">{res.guest?.user?.name || "Guest"}</span>
+                        <span className="block font-bold text-sm text-foreground truncate">{res.guest?.user?.fullname || res.guest?.user?.name || "Guest"}</span>
                         <span className="inline-flex items-center text-[10px] bg-primary/10 text-primary font-bold px-1.5 py-0.5 rounded-md mt-0.5">
                           ★ {res.guest?.averageRating || "4.8"} Rating
                         </span>
@@ -331,10 +322,10 @@ export default function TodayTab({ onSwitchTab, onNavigateToMessage }) {
                           className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-full border border-border hover:bg-muted font-bold text-foreground transition cursor-pointer"
                         >
                           <Phone size={12} /> 
-                          <span>{isPhoneRevealed ? "+91 98765 43210" : "Call"}</span>
+                          <span>{isPhoneRevealed ? (res.guest?.user?.contact || "No Contact") : "Call"}</span>
                         </button>
                         <button 
-                          onClick={() => onNavigateToMessage && onNavigateToMessage(res.guest?.user?.name || "Guest")}
+                          onClick={() => onNavigateToMessage && onNavigateToMessage(res.guest?.user?.fullname || res.guest?.user?.name || "Guest")}
                           className="flex items-center gap-1.5 text-xs bg-primary text-primary-foreground px-3 py-2 rounded-full hover:bg-[var(--color-primary-hover)] font-bold transition cursor-pointer"
                         >
                           <MessageSquare size={12} /> Message
@@ -407,7 +398,7 @@ export default function TodayTab({ onSwitchTab, onNavigateToMessage }) {
                 <StickyNote size={18} className="text-amber-500" />
                 Private Host Note
               </h4>
-              <p className="text-xs text-muted-foreground mt-0.5">Add private reminders for hosting {selectedBookingForNote.guest?.user?.name}. Guests cannot see these notes.</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Add private reminders for hosting {selectedBookingForNote.guest?.user?.fullname || selectedBookingForNote.guest?.user?.name}. Guests cannot see these notes.</p>
             </div>
             
             <div className="p-5">
@@ -482,7 +473,7 @@ export default function TodayTab({ onSwitchTab, onNavigateToMessage }) {
                           className="h-10 w-10 rounded-full object-cover border"
                         />
                         <div>
-                          <span className="block font-bold text-sm text-foreground">{res.guest?.user?.name}</span>
+                          <span className="block font-bold text-sm text-foreground">{res.guest?.user?.fullname || res.guest?.user?.name}</span>
                           <span className="block text-[11px] text-muted-foreground">{res.property?.title} ({res.property?.location})</span>
                         </div>
                       </div>
@@ -518,12 +509,12 @@ export default function TodayTab({ onSwitchTab, onNavigateToMessage }) {
                         onClick={() => togglePhone(res.bookingId)}
                         className="text-xs border px-3 py-1.5 rounded-full hover:bg-muted font-semibold text-foreground cursor-pointer"
                       >
-                        {isPhoneRevealed ? "+91 98765 43210" : "Call"}
+                        {isPhoneRevealed ? (res.guest?.user?.contact || "No Contact") : "Call"}
                       </button>
                       <button 
                         onClick={() => {
                           setShowAllReservations(false);
-                          if (onNavigateToMessage) onNavigateToMessage(res.guest?.user?.name);
+                          if (onNavigateToMessage) onNavigateToMessage(res.guest?.user?.fullname || res.guest?.user?.name);
                         }}
                         className="text-xs bg-primary text-primary-foreground px-3.5 py-1.5 rounded-full hover:bg-[var(--color-primary-hover)] font-semibold cursor-pointer"
                       >

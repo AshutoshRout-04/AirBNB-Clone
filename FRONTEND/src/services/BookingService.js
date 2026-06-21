@@ -10,6 +10,18 @@ export const getAllBookings = () => {
   return axios.get(API_URL);
 };
 
+export const getBookingsByUserId = (userId) => {
+  return axios.get(`${API_URL}/user/${userId}`);
+};
+
+export const getBookingsByHostId = (hostId) => {
+  return axios.get(`${API_URL}/host/${hostId}`);
+};
+
+export const updateBooking = (bookingId, bookingData) => {
+  return axios.put(`${API_URL}/${bookingId}`, bookingData);
+};
+
 export const deleteBooking = (bookingId) => {
   return axios.delete(`${API_URL}/${bookingId}`);
 };

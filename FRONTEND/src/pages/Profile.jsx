@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
+import { getUserById, updateUser } from "../services/UserService"
 import {
   GraduationCap,
   Globe,
@@ -63,15 +64,71 @@ export default function Profile() {
     },
   })
 
-  // Synchronize profile name with logged-in user
+  // Load user profile details from backend
   useEffect(() => {
-    if (user && user.name) {
-      setProfile((prev) => ({
-        ...prev,
-        name: user.name,
-      }))
+    if (user && user.id) {
+      getUserById(user.id)
+        .then((res) => {
+          const dbUser = res.data;
+          if (dbUser) {
+            setProfile({
+              name: dbUser.fullname || user.name || "Asif",
+              role: dbUser.role || "Guest",
+              avatar: dbUser.avatar || null,
+              bio: dbUser.bio || "",
+              prompts: {
+                school: dbUser.school || "",
+                work: dbUser.work || "",
+                wantedToGo: dbUser.wantedToGo || "",
+                pets: dbUser.pets || "",
+                decadeBorn: dbUser.decadeBorn || "",
+                uselessSkill: dbUser.uselessSkill || "",
+                song: dbUser.song || "",
+                funFact: dbUser.funFact || "",
+                timeSpend: dbUser.timeSpend || "",
+                bioTitle: dbUser.bioTitle || "",
+                languages: dbUser.languages || "",
+                obsessedWith: dbUser.obsessedWith || "",
+                live: dbUser.live || "",
+              },
+            });
+          }
+        })
+        .catch((err) => console.error("Error fetching user profile:", err));
     }
-  }, [user])
+  }, [user]);
+
+  const handleSaveProfile = async () => {
+    if (!user || !user.id) {
+      setIsEditing(false);
+      return;
+    }
+    try {
+      const payload = {
+        fullname: profile.name,
+        avatar: profile.avatar,
+        bio: profile.bio,
+        school: profile.prompts.school,
+        work: profile.prompts.work,
+        wantedToGo: profile.prompts.wantedToGo,
+        pets: profile.prompts.pets,
+        decadeBorn: profile.prompts.decadeBorn,
+        uselessSkill: profile.prompts.uselessSkill,
+        song: profile.prompts.song,
+        funFact: profile.prompts.funFact,
+        timeSpend: profile.prompts.timeSpend,
+        bioTitle: profile.prompts.bioTitle,
+        languages: profile.prompts.languages,
+        obsessedWith: profile.prompts.obsessedWith,
+        live: profile.prompts.live,
+      };
+      await updateUser(user.id, payload);
+      setIsEditing(false);
+    } catch (err) {
+      console.error("Failed to save profile:", err);
+      alert("Error saving profile. Please check the backend.");
+    }
+  };
 
   // Prompt configuration definitions (mapped to layout order)
   const leftPrompts = [
@@ -143,7 +200,7 @@ export default function Profile() {
                       <ProfileAboutMeEdit
                         profile={profile}
                         onChangeProfile={setProfile}
-                        onDone={() => setIsEditing(false)}
+                        onDone={handleSaveProfile}
                         leftPrompts={leftPrompts}
                         rightPrompts={rightPrompts}
                       />

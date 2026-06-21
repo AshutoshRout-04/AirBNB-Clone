@@ -10,6 +10,14 @@ export const createProperty = (propertyData) => {
     return axios.post(`${API_URL}/addProperty`, propertyData);
 };
 
+export const getPropertiesByHost = (hostId) => {
+    return axios.get(`${API_URL}/by-host/${hostId}`);
+};
+
+export const getPropertiesByType = (type) => {
+    return axios.get(`${API_URL}/by-type/${type}`);
+};
+
 // Creates a property linked to a specific host (preferred method)
 export const createPropertyForHost = (hostId, propertyData) => {
     return axios.post(`${API_URL}/addProperty/${hostId}`, propertyData);

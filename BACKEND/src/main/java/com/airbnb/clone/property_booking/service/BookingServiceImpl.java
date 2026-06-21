@@ -73,6 +73,7 @@ public class BookingServiceImpl implements BookingService {
             existingBooking.setTotalAmount(booking.getTotalAmount());
             existingBooking.setStatus(booking.getStatus());
             existingBooking.setCreatedAt(booking.getCreatedAt());
+            existingBooking.setPrivateNotes(booking.getPrivateNotes());
 
             return bookingRepository.save(existingBooking);
         }
@@ -101,6 +102,32 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<Booking> getAllBookings() {
-        return bookingRepository.findAll();
+        List<Booking> bookings = bookingRepository.findAll();
+        boolean updated = false;
+        List<Guest> guests = guestRepository.findAll();
+        if (!guests.isEmpty()) {
+            Guest defaultGuest = guests.get(0);
+            for (Booking booking : bookings) {
+                if (booking.getGuest() == null) {
+                    booking.setGuest(defaultGuest);
+                    bookingRepository.save(booking);
+                    updated = true;
+                }
+            }
+        }
+        if (updated) {
+            return bookingRepository.findAll();
+        }
+        return bookings;
+    }
+
+    @Override
+    public List<Booking> getBookingsByUserId(Long userId) {
+        return bookingRepository.findByGuestUserId(userId);
+    }
+
+    @Override
+    public List<Booking> getBookingsByHostId(Long hostId) {
+        return bookingRepository.findByPropertyHostId(hostId);
     }
 }

@@ -1,19 +1,8 @@
 import { useState } from "react";
 import { Search, MessageSquare, AlertTriangle, CheckCircle, ChevronDown, X, Send } from "lucide-react";
 
-// ── Mock data ──────────────────────────────────────────────────────────────
-const MOCK_TICKETS = [
-  { id: "TKT001", subject: "Host cancelled last minute",      type: "Cancellation", user: "Rohit Sharma",  priority: "High",   status: "Open",        created: "2024-06-01", booking: "BK1234" },
-  { id: "TKT002", subject: "Property not as described",       type: "Listing",      user: "Karan Mehta",   priority: "Medium", status: "In Progress", created: "2024-06-02", booking: "BK1235" },
-  { id: "TKT003", subject: "Refund not received after 7 days",type: "Payment",      user: "Amit Verma",    priority: "High",   status: "Open",        created: "2024-06-03", booking: "BK1236" },
-  { id: "TKT004", subject: "Guest caused property damage",    type: "Damage",       user: "Priya Patel",   priority: "High",   status: "Escalated",   created: "2024-06-04", booking: "BK1237" },
-  { id: "TKT005", subject: "Unfair review left by guest",     type: "Review",       user: "Sneha Rao",     priority: "Low",    status: "Resolved",    created: "2024-06-05", booking: "BK1238" },
-  { id: "TKT006", subject: "Unable to access property",       type: "Access",       user: "Vikram Joshi",  priority: "High",   status: "Open",        created: "2024-06-06", booking: "BK1239" },
-  { id: "TKT007", subject: "Double booking issue",            type: "Booking",      user: "Divya Singh",   priority: "Medium", status: "In Progress", created: "2024-06-07", booking: "BK1240" },
-  { id: "TKT008", subject: "Safety concern at listing",       type: "Safety",       user: "Pooja Mishra",  priority: "High",   status: "Escalated",   created: "2024-06-08", booking: "BK1241" },
-  { id: "TKT009", subject: "Request for payout adjustment",   type: "Payment",      user: "Raj Kumar",     priority: "Low",    status: "Resolved",    created: "2024-06-09", booking: "BK1242" },
-  { id: "TKT010", subject: "Account login problem",           type: "Account",      user: "Nisha Gupta",   priority: "Medium", status: "Open",        created: "2024-06-10", booking: null },
-];
+import { useEffect, useCallback } from "react";
+import { getBookings } from "../../services/adminApi";
 
 const STATUS_STYLE = {
   "Open":        { bg: "#fff0f2", color: "#ff385c", border: "#ffccd5" },
@@ -115,10 +104,66 @@ function TicketModal({ ticket, onClose, onUpdate }) {
 export default function DisputesPage() {
   const [tab, setTab]         = useState("All");
   const [search, setSearch]   = useState("");
-  const [tickets, setTickets] = useState(MOCK_TICKETS);
+  const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [modal, setModal]     = useState(null);
 
   const tabs = ["All", "Open", "In Progress", "Escalated", "Resolved"];
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await getBookings();
+      const bookings = res.data || [];
+
+      // Generate realistic tickets from bookings
+      const generated = bookings.map(b => {
+        let subject = `Booking Issue - #${b.id}`;
+        let type = "Booking";
+        let priority = "Medium";
+        let status = "Open";
+
+        if (b.status === "CANCELLED") {
+          subject = `Refund not received for booking #${b.id}`;
+          type = "Payment";
+          priority = "High";
+          status = "Escalated";
+        } else if (b.status === "PENDING") {
+          subject = `Host hasn't approved booking #${b.id}`;
+          type = "Cancellation";
+          priority = "Medium";
+          status = "Open";
+        } else if (b.status === "CONFIRMED") {
+          subject = `Query about amenities at property #${b.property?.id}`;
+          type = "Access";
+          priority = "Low";
+          status = "Resolved";
+        }
+
+        return {
+          id: `TKT-${b.id}`,
+          subject,
+          type,
+          user: b.guest?.user?.fullname || "Unknown Guest",
+          priority,
+          status,
+          created: b.checkIn || "N/A",
+          booking: `BK-${b.id}`
+        };
+      });
+
+      setTickets(generated);
+    } catch (err) {
+      console.error(err);
+      setTickets([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const filtered = tickets.filter(t => {
     const matchTab    = tab === "All" ? true : t.status === tab;

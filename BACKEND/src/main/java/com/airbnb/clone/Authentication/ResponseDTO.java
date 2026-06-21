@@ -11,6 +11,6 @@ import lombok.Setter;
 @RequiredArgsConstructor
 public class ResponseDTO {
 
-	private String Jwt;
-	private Long UserId;
+	private String jwt;
+	private Long id;
 }

@@ -40,8 +40,29 @@ public class User implements UserDetails  {
     private String password;
     
     @Enumerated(EnumType.STRING)
+    @jakarta.persistence.Column(columnDefinition = "varchar(255)")
     private Role role;
     private String contact;
+
+    @jakarta.persistence.Column(columnDefinition = "TEXT")
+    private String avatar;
+
+    @jakarta.persistence.Column(columnDefinition = "TEXT")
+    private String bio;
+
+    private String school;
+    private String work;
+    private String wantedToGo;
+    private String pets;
+    private String decadeBorn;
+    private String uselessSkill;
+    private String song;
+    private String funFact;
+    private String timeSpend;
+    private String bioTitle;
+    private String languages;
+    private String obsessedWith;
+    private String live;
     
     @OneToOne(mappedBy = "user")
     @com.fasterxml.jackson.annotation.JsonIgnore
@@ -61,8 +82,8 @@ public class User implements UserDetails  {
 
 	@Override
 	public String getUsername() {
-		// TODO Auto-generated method stub
-		return fullname;
+		// Spring Security uses this as the principal identifier — must match what loadUserByUsername() uses (email)
+		return email;
 	}
 
 	

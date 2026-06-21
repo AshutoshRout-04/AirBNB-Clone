@@ -1,19 +1,8 @@
 import { useState } from "react";
 import { Search, CheckCircle, XCircle, Flag, Trash2, Eye, X } from "lucide-react";
 
-// ── Mock data ─────────────────────────────────────────────────────────────
-const MOCK_LISTINGS = [
-  { id: 1,  title: "Cozy Beachfront Villa",       host: "Priya Patel",   city: "Goa",       type: "Villa",      price: 8500,  status: "Pending",  photos: 8  },
-  { id: 2,  title: "Mountain Retreat Cabin",       host: "Sneha Rao",    city: "Manali",    type: "Cabin",      price: 4200,  status: "Approved", photos: 6  },
-  { id: 3,  title: "Heritage City Apartment",      host: "Nisha Gupta",  city: "Jaipur",    type: "Apartment",  price: 2800,  status: "Approved", photos: 10 },
-  { id: 4,  title: "Luxury Penthouse Suite",       host: "Pooja Mishra", city: "Mumbai",    type: "Apartment",  price: 15000, status: "Pending",  photos: 12 },
-  { id: 5,  title: "Forest Treehouse Escape",      host: "Raj Kumar",    city: "Coorg",     type: "Unique",     price: 6500,  status: "Flagged",  photos: 5  },
-  { id: 6,  title: "Desert Camp Experience",       host: "Priya Patel",  city: "Jaisalmer", type: "Unique",     price: 3500,  status: "Approved", photos: 7  },
-  { id: 7,  title: "Backwaters Houseboat",         host: "Sneha Rao",    city: "Alleppey",  type: "Houseboat",  price: 9000,  status: "Pending",  photos: 9  },
-  { id: 8,  title: "Budget City Stay",             host: "Nisha Gupta",  city: "Delhi",     type: "Studio",     price: 1200,  status: "Flagged",  photos: 3  },
-  { id: 9,  title: "Charming Hill Station Home",   host: "Raj Kumar",    city: "Ooty",      type: "House",      price: 3800,  status: "Approved", photos: 8  },
-  { id: 10, title: "Beachside Shack",              host: "Pooja Mishra", city: "Pondicherry",type: "Studio",   price: 2200,  status: "Pending",  photos: 4  },
-];
+import { useEffect, useCallback } from "react";
+import { getProperties, deleteProperty } from "../../services/adminApi";
 
 const STATUS_STYLE = {
   Pending:  { bg: "#fff8e7", color: "#fc642d", border: "#fde1bb" },
@@ -46,7 +35,7 @@ function DetailModal({ listing, onClose }) {
           ))}
         </div>
         <div style={{ padding: "14px 16px", background: "#f7f7f7", borderRadius: 10, fontSize: 12, color: "#717171" }}>
-          <strong style={{ color: "#222" }}>Amenities (mock):</strong>&nbsp; WiFi · AC · Hot Water · Kitchen · Parking
+          <strong style={{ color: "#222" }}>Amenities:</strong>&nbsp; {listing.rawAmenities || "None"}
         </div>
       </div>
     </div>
@@ -56,10 +45,40 @@ function DetailModal({ listing, onClose }) {
 export default function ListingsPage() {
   const [tab, setTab]         = useState("All");
   const [search, setSearch]   = useState("");
-  const [listings, setListing]= useState(MOCK_LISTINGS);
+  const [listings, setListing]= useState([]);
+  const [loading, setLoading] = useState(true);
   const [detail, setDetail]   = useState(null);
 
   const tabs = ["All", "Pending", "Approved", "Flagged", "Removed"];
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await getProperties();
+      const props = res.data || [];
+      const mapped = props.map(p => ({
+        id: p.id,
+        title: p.title,
+        host: p.host_Id?.user?.fullname || p.host_id?.user?.fullname || "Unknown Host",
+        city: p.location,
+        type: p.amenities?.includes("Villa") ? "Villa" : "Apartment",
+        price: p.pricePerNight,
+        status: p.available ? "Approved" : "Pending",
+        photos: p.photos ? p.photos.split(",").length : 0,
+        rawAmenities: p.amenities,
+      }));
+      setListing(mapped);
+    } catch (err) {
+      console.error(err);
+      setListing([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const filtered = listings.filter(l => {
     const matchTab = tab === "All" ? true : l.status === tab;
@@ -67,7 +86,18 @@ export default function ListingsPage() {
     return matchTab && matchSearch;
   });
 
-  const updateStatus = (id, newStatus) => setListing(prev => prev.map(l => l.id === id ? { ...l, status: newStatus } : l));
+  const updateStatus = async (id, newStatus) => {
+    if (newStatus === "Removed") {
+      try {
+        await deleteProperty(id);
+        setListing(prev => prev.filter(l => l.id !== id));
+      } catch (err) {
+        console.error("Failed to delete property", err);
+      }
+    } else {
+      setListing(prev => prev.map(l => l.id === id ? { ...l, status: newStatus } : l));
+    }
+  };
 
   const counts = { Pending: listings.filter(l => l.status === "Pending").length, Flagged: listings.filter(l => l.status === "Flagged").length };
 

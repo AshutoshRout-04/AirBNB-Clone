@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
-import { Plus, Edit2, Trash2, Camera, Sparkles, CheckCircle2, Eye, BookOpen, Wifi, Shield, ArrowRight, X, Star } from "lucide-react"
-import { getAllProperties, createProperty, createPropertyForHost, updateProperty, deleteProperty } from "../../services/PropertyService"
+import { Plus, Edit2, Trash2, Camera, Sparkles, CheckCircle2, Eye, BookOpen, Wifi, Shield, ArrowRight, X, Star, Briefcase } from "lucide-react"
+import { getAllProperties, createProperty, createPropertyForHost, updateProperty, deleteProperty, getPropertiesByHost } from "../../services/PropertyService"
 import { getPropertyImages } from "../../services/ImageHelper"
 import { useToast } from "../Toast"
 
@@ -19,10 +19,16 @@ export default function ListingsTab() {
   const [loading, setLoading] = useState(false)
   const [hostId, setHostId] = useState(null)
   
-  // Read the logged-in host ID from localStorage on mount
+  // Read the logged-in host ID from localStorage on mount and fetch listings
   useEffect(() => {
     const storedHostId = localStorage.getItem("staybnb_host_id")
-    if (storedHostId) setHostId(parseInt(storedHostId))
+    if (storedHostId) {
+      const parsedId = parseInt(storedHostId)
+      setHostId(parsedId)
+      fetchProperties(parsedId)
+    } else {
+      fetchProperties()
+    }
   }, [])
   
   // Modals & Panels state
@@ -39,7 +45,9 @@ export default function ListingsTab() {
     maxGuests: "",
     bedrooms: "",
     bathrooms: "",
-    available: true
+    available: true,
+    propertyType: "room",
+    companyName: ""
   })
 
   // Simulated photo tour gallery state
@@ -63,14 +71,13 @@ export default function ListingsTab() {
     houseRules: ""
   })
 
-  useEffect(() => {
-    fetchProperties()
-  }, [])
-
-  const fetchProperties = async () => {
+  const fetchProperties = async (id) => {
     setLoading(true)
     try {
-      const res = await getAllProperties()
+      const currentHostId = id || hostId
+      const res = currentHostId 
+        ? await getPropertiesByHost(currentHostId)
+        : await getAllProperties()
       setProperties(res.data || [])
     } catch (err) {
       console.error("Failed to fetch properties:", err)
@@ -90,7 +97,9 @@ export default function ListingsTab() {
       maxGuests: "2",
       bedrooms: "1",
       bathrooms: "1",
-      available: true
+      available: true,
+      propertyType: "room",
+      companyName: ""
     })
     setEditingProperty("new")
     setActiveListingTab("details")
@@ -117,31 +126,38 @@ export default function ListingsTab() {
       maxGuests: prop.maxGuests ? prop.maxGuests.toString() : "2",
       bedrooms: prop.bedrooms ? prop.bedrooms.toString() : "1",
       bathrooms: prop.bathrooms ? prop.bathrooms.toString() : "1",
-      available: prop.available !== undefined ? prop.available : true
+      available: prop.available !== undefined ? prop.available : true,
+      propertyType: prop.propertyType || "room",
+      companyName: prop.companyName || ""
     })
     setEditingProperty(prop)
     setActiveListingTab("details")
     
-    try {
-      const amenitiesKey = `staybnb_amenities_${prop.id}`
-      const storedAmenities = JSON.parse(localStorage.getItem(amenitiesKey) || "null")
-      setSelectedAmenities(storedAmenities || ["Wi-Fi", "Kitchen", "Air Conditioning", "Free parking on premises"])
+    // Load amenities from backend property field
+    if (prop.amenities) {
+      try {
+        setSelectedAmenities(JSON.parse(prop.amenities))
+      } catch (_) {
+        setSelectedAmenities(prop.amenities.split(","))
+      }
+    } else {
+      setSelectedAmenities(["Wi-Fi", "Kitchen", "Air Conditioning", "Free parking on premises"])
+    }
 
-      const guideKey = `staybnb_guide_${prop.id}`
-      const storedGuide = JSON.parse(localStorage.getItem(guideKey) || "null")
-      setGuideData(storedGuide || {
-        wifiNetwork: "StayBNB_HighSpeed",
-        wifiPassword: "holidayvibes",
-        checkInMethod: "Smart Lock",
-        checkInInstructions: "Smart lock access code will be sent to your inbox 24 hours prior to arrival.",
-        houseRules: "Please keep the noise down during late hours. Respect the neighbors."
-      })
+    // Load guide data from backend property fields
+    setGuideData({
+      wifiNetwork: prop.wifiNetwork || "StayBNB_HighSpeed",
+      wifiPassword: prop.wifiPassword || "holidayvibes",
+      checkInMethod: prop.checkInMethod || "Smart Lock",
+      checkInInstructions: prop.checkInInstructions || "Smart lock access code will be sent to your inbox 24 hours prior to arrival.",
+      houseRules: prop.houseRules || "Please keep the noise down during late hours. Respect the neighbors."
+    })
 
-      const photosKey = `staybnb_photos_${prop.id}`
-      const storedPhotos = JSON.parse(localStorage.getItem(photosKey) || "null")
-      if (storedPhotos) {
-        setUploadedPhotos(storedPhotos)
-      } else {
+    // Load photos from backend property field
+    if (prop.photos) {
+      try {
+        setUploadedPhotos(JSON.parse(prop.photos))
+      } catch (_) {
         const images = getPropertyImages(prop)
         setUploadedPhotos([
           { id: 1, url: images[0], caption: "Main listing view", category: "Exterior" },
@@ -149,7 +165,14 @@ export default function ListingsTab() {
           { id: 3, url: images[2], caption: "Bedroom", category: "Bedroom" }
         ])
       }
-    } catch (_) {}
+    } else {
+      const images = getPropertyImages(prop)
+      setUploadedPhotos([
+        { id: 1, url: images[0], caption: "Main listing view", category: "Exterior" },
+        { id: 2, url: images[1], caption: "Living area", category: "Living Room" },
+        { id: 3, url: images[2], caption: "Bedroom", category: "Bedroom" }
+      ])
+    }
   }
 
   const handleSaveProperty = async (e) => {
@@ -169,28 +192,34 @@ export default function ListingsTab() {
       location: formData.location,
       pricePerNight: parseFloat(formData.pricePerNight),
       maxGuests: parseInt(formData.maxGuests),
-      bedrooms: parseInt(formData.bedrooms),
-      bathrooms: parseInt(formData.bathrooms),
-      available: formData.available
+      bedrooms: formData.propertyType === "room" ? parseInt(formData.bedrooms || 0) : 0,
+      bathrooms: formData.propertyType === "room" ? parseInt(formData.bathrooms || 0) : 0,
+      available: formData.available,
+      amenities: JSON.stringify(selectedAmenities),
+      photos: JSON.stringify(uploadedPhotos),
+      wifiNetwork: guideData.wifiNetwork,
+      wifiPassword: guideData.wifiPassword,
+      checkInMethod: guideData.checkInMethod,
+      checkInInstructions: guideData.checkInInstructions,
+      houseRules: guideData.houseRules,
+      propertyType: formData.propertyType,
+      companyName: formData.companyName
     }
 
     try {
       if (editingProperty === "new") {
-        let response
         if (hostId) {
           // Link property to the current host
-          response = await createPropertyForHost(hostId, payload)
+          await createPropertyForHost(hostId, payload)
         } else {
           // Fallback: save without host link (will warn user)
-          response = await createProperty(payload)
+          await createProperty(payload)
           toast({
             type: "warning",
             title: "No host profile linked",
             message: "Property saved but not linked to a host. Please set up your host profile."
           })
         }
-        const newProp = response.data || { id: Date.now(), ...payload }
-        saveLocalConfigs(newProp.id)
         toast({
           type: "success",
           title: "Listing created",
@@ -198,7 +227,6 @@ export default function ListingsTab() {
         })
       } else {
         await updateProperty(editingProperty.id, payload)
-        saveLocalConfigs(editingProperty.id)
         toast({
           type: "success",
           title: "Listing updated",
@@ -218,9 +246,7 @@ export default function ListingsTab() {
   }
 
   const saveLocalConfigs = (id) => {
-    localStorage.setItem(`staybnb_amenities_${id}`, JSON.stringify(selectedAmenities))
-    localStorage.setItem(`staybnb_guide_${id}`, JSON.stringify(guideData))
-    localStorage.setItem(`staybnb_photos_${id}`, JSON.stringify(uploadedPhotos))
+    // No-op (now handled directly via payload in backend database)
   }
 
   const handleDeleteListing = async (id) => {
@@ -352,7 +378,7 @@ export default function ListingsTab() {
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                     />
                     <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-1 rounded-md">
-                      ₹{prop.pricePerNight?.toLocaleString()} / night
+                      ₹{prop.pricePerNight?.toLocaleString()} / {prop.propertyType === "experience" ? "session" : prop.propertyType === "service" ? "service" : "night"}
                     </div>
                     
                     {prop.rating && (
@@ -365,14 +391,26 @@ export default function ListingsTab() {
                   <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
                     <div>
                       <h3 className="font-bold text-sm text-foreground line-clamp-1 group-hover:text-primary transition">{prop.title}</h3>
-                      <p className="text-xs text-muted-foreground mt-1">{prop.location}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{prop.location} {prop.companyName ? `· By ${prop.companyName}` : ""}</p>
                       <p className="text-xs text-muted-foreground/90 mt-2 line-clamp-2 leading-relaxed">
                         {prop.description || "No description provided."}
                       </p>
                     </div>
 
                     <div className="flex gap-2 justify-between items-center text-xs font-semibold text-muted-foreground border-t border-border/60 pt-3">
-                      <span>{prop.bedrooms} Bed · {prop.bathrooms} Bath · {prop.maxGuests} Guests</span>
+                      <span>
+                        {prop.propertyType === "experience" ? (
+                          <span className="text-purple-700 bg-purple-50 px-2 py-0.5 rounded font-bold text-[10px] flex items-center gap-1">
+                            <Sparkles size={10} /> Experience · Up to {prop.maxGuests} guests
+                          </span>
+                        ) : prop.propertyType === "service" ? (
+                          <span className="text-blue-700 bg-blue-50 px-2 py-0.5 rounded font-bold text-[10px] flex items-center gap-1">
+                            <Briefcase size={10} /> Service {prop.companyName ? `by ${prop.companyName}` : ""}
+                          </span>
+                        ) : (
+                          `${prop.bedrooms} Bed · ${prop.bathrooms} Bath · ${prop.maxGuests} Guests`
+                        )}
+                      </span>
                     </div>
 
                     <div className="flex gap-2 pt-1">
@@ -457,6 +495,32 @@ export default function ListingsTab() {
           <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
             {activeListingTab === "details" && (
               <div className="space-y-5">
+                {/* Listing Type & Company/Office Selector */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 border-b border-border/40 pb-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-foreground">Listing Type</label>
+                    <select
+                      value={formData.propertyType || "room"}
+                      onChange={(e) => setFormData({ ...formData, propertyType: e.target.value })}
+                      className="w-full rounded-xl border border-border px-3.5 py-2.5 text-xs outline-none bg-transparent text-foreground font-semibold"
+                    >
+                      <option value="room">Room / Stay</option>
+                      <option value="experience">Experience</option>
+                      <option value="service">Service</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-foreground">Company / Host Office Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. DreamStays Ltd / Tour Guides Co. (Optional)"
+                      value={formData.companyName || ""}
+                      onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                      className="w-full rounded-xl border border-border px-4 py-2.5 text-xs outline-none focus:border-primary bg-transparent text-foreground font-semibold"
+                    />
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-1.5">
                     <label className="block text-xs font-bold text-foreground">Listing Title</label>
@@ -493,7 +557,9 @@ export default function ListingsTab() {
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-foreground">Price per Night</label>
+                    <label className="block text-xs font-bold text-foreground">
+                      {formData.propertyType === "experience" ? "Price per Person" : formData.propertyType === "service" ? "Price per Service" : "Price per Night"}
+                    </label>
                     <div className="relative">
                       <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">₹</span>
                       <input
@@ -506,7 +572,9 @@ export default function ListingsTab() {
                     </div>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-foreground">Max Guests</label>
+                    <label className="block text-xs font-bold text-foreground">
+                      {formData.propertyType === "experience" ? "Max Participants" : formData.propertyType === "service" ? "Max Capacity" : "Max Guests"}
+                    </label>
                     <input
                       type="number"
                       value={formData.maxGuests}
@@ -514,25 +582,29 @@ export default function ListingsTab() {
                       className="w-full rounded-xl border border-border px-3.5 py-2.5 text-xs outline-none focus:border-primary bg-transparent text-foreground font-semibold"
                     />
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-foreground">Bedrooms</label>
-                    <input
-                      type="number"
-                      value={formData.bedrooms}
-                      onChange={(e) => setFormData({ ...formData, bedrooms: e.target.value })}
-                      className="w-full rounded-xl border border-border px-3.5 py-2.5 text-xs outline-none focus:border-primary bg-transparent text-foreground font-semibold"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-foreground">Bathrooms</label>
-                    <input
-                      type="number"
-                      step="1"
-                      value={formData.bathrooms}
-                      onChange={(e) => setFormData({ ...formData, bathrooms: e.target.value })}
-                      className="w-full rounded-xl border border-border px-3.5 py-2.5 text-xs outline-none focus:border-primary bg-transparent text-foreground font-semibold"
-                    />
-                  </div>
+                  {(!formData.propertyType || formData.propertyType === "room") && (
+                    <>
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-foreground">Bedrooms</label>
+                        <input
+                          type="number"
+                          value={formData.bedrooms}
+                          onChange={(e) => setFormData({ ...formData, bedrooms: e.target.value })}
+                          className="w-full rounded-xl border border-border px-3.5 py-2.5 text-xs outline-none focus:border-primary bg-transparent text-foreground font-semibold"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-foreground">Bathrooms</label>
+                        <input
+                          type="number"
+                          step="1"
+                          value={formData.bathrooms}
+                          onChange={(e) => setFormData({ ...formData, bathrooms: e.target.value })}
+                          className="w-full rounded-xl border border-border px-3.5 py-2.5 text-xs outline-none focus:border-primary bg-transparent text-foreground font-semibold"
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2 pt-2">

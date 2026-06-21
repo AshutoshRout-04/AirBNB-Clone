@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-CloneApplication<clone>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.airbnb.clone.CloneApplication",
+            "projectName": "clone",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

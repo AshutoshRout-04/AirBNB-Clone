@@ -51,8 +51,14 @@ export default function PropertyGrid({
   }
 
   // 2. Category filter
-  if (selectedCategory && selectedCategory !== "all") {
-    filtered = filtered.filter((p) => getPropertyCategory(p) === selectedCategory)
+  if (selectedCategory === "experiences") {
+    filtered = filtered.filter((p) => p.propertyType === "experience")
+  } else if (selectedCategory === "services") {
+    filtered = filtered.filter((p) => p.propertyType === "service")
+  } else if (selectedCategory && selectedCategory !== "all") {
+    filtered = filtered.filter((p) => getPropertyCategory(p) === selectedCategory && (p.propertyType === "room" || !p.propertyType))
+  } else {
+    filtered = filtered.filter((p) => p.propertyType === "room" || !p.propertyType)
   }
 
   // 3. Text query
@@ -129,8 +135,14 @@ export function getFilteredCount(properties, { showWishlistOnly, selectedCategor
     try { liked = JSON.parse(localStorage.getItem("staybnb_likes") || "[]") } catch (_) {}
     filtered = filtered.filter((p) => liked.includes(p.id))
   }
-  if (selectedCategory && selectedCategory !== "all") {
-    filtered = filtered.filter((p) => getPropertyCategory(p) === selectedCategory)
+  if (selectedCategory === "experiences") {
+    filtered = filtered.filter((p) => p.propertyType === "experience")
+  } else if (selectedCategory === "services") {
+    filtered = filtered.filter((p) => p.propertyType === "service")
+  } else if (selectedCategory && selectedCategory !== "all") {
+    filtered = filtered.filter((p) => getPropertyCategory(p) === selectedCategory && (p.propertyType === "room" || !p.propertyType))
+  } else {
+    filtered = filtered.filter((p) => p.propertyType === "room" || !p.propertyType)
   }
   const q = (query || "").trim().toLowerCase()
   if (q) {

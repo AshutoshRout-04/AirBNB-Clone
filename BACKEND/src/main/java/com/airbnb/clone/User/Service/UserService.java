@@ -14,6 +14,5 @@ public interface UserService {
 	User Update(Long Id,User User) throws UserException;
 	User getUserByEmail(String Email);
 	User getUserById(Long Id) throws UserException;
-	
-	
+	User becomeHost(Long userId) throws UserException;
 }

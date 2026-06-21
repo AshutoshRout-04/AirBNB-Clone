@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react"
-import { Star, Users, BedDouble, Bath, Heart, ChevronLeft, ChevronRight } from "lucide-react"
+import { Star, Users, BedDouble, Bath, Heart, ChevronLeft, ChevronRight, Sparkles, Briefcase } from "lucide-react"
 import { getPropertyImages } from "../services/ImageHelper"
 
 export default function PropertyCard({ property, onSelect }) {
-  const { id, title, location, pricePerNight, bedrooms, bathrooms, maxGuests, available, rating = 4.8 } = property
+  const { id, title, location, pricePerNight, bedrooms, bathrooms, maxGuests, available, rating = 4.8, propertyType, companyName } = property
   const images = getPropertyImages(property)
 
   const [imageIndex, setImageIndex] = useState(0)
@@ -123,20 +123,35 @@ export default function PropertyCard({ property, onSelect }) {
       </div>
 
       {/* Location */}
-      <p className="text-xs text-muted-foreground mt-0.5">{location}</p>
+      <p className="text-xs text-muted-foreground mt-0.5">
+        {location} {companyName ? `· By ${companyName}` : ""}
+      </p>
 
       {/* Specifications */}
       <div className="mt-2 flex flex-wrap gap-x-2.5 gap-y-1 text-[11px] text-muted-foreground">
-        <span className="flex items-center gap-0.5"><Users size={11} /> {maxGuests} guest{maxGuests === 1 ? "" : "s"}</span>
-        <span>•</span>
-        <span className="flex items-center gap-0.5"><BedDouble size={11} /> {bedrooms} bd</span>
-        <span>•</span>
-        <span className="flex items-center gap-0.5"><Bath size={11} /> {bathrooms} ba</span>
+        {propertyType === "experience" ? (
+          <span className="inline-flex items-center gap-1 bg-purple-50 text-purple-700 px-2 py-0.5 rounded-md font-bold text-[10px]">
+            <Sparkles size={10} /> Experience · Up to {maxGuests} guests
+          </span>
+        ) : propertyType === "service" ? (
+          <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md font-bold text-[10px]">
+            <Briefcase size={10} /> Service {companyName ? `by ${companyName}` : ""}
+          </span>
+        ) : (
+          <>
+            <span className="flex items-center gap-0.5"><Users size={11} /> {maxGuests} guest{maxGuests === 1 ? "" : "s"}</span>
+            <span>•</span>
+            <span className="flex items-center gap-0.5"><BedDouble size={11} /> {bedrooms} bd</span>
+            <span>•</span>
+            <span className="flex items-center gap-0.5"><Bath size={11} /> {bathrooms} ba</span>
+          </>
+        )}
       </div>
 
       {/* Pricing */}
       <p className="mt-2.5 text-xs text-muted-foreground">
-        <span className="font-bold text-sm text-foreground">₹{pricePerNight.toLocaleString()}</span> night
+        <span className="font-bold text-sm text-foreground">₹{pricePerNight.toLocaleString()}</span>{' '}
+        {propertyType === "experience" ? "session" : propertyType === "service" ? "service" : "night"}
       </p>
     </article>
   )

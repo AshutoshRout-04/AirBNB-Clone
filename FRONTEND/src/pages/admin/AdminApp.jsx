@@ -10,6 +10,9 @@ import DisputesPage   from "./DisputesPage";
 import AnalyticsPage  from "./AnalyticsPage";
 import SettingsPage   from "./SettingsPage";
 
+import { useAuth } from "../../components/LoginModal";
+import { Navigate } from "react-router-dom";
+
 const PAGES = {
   dashboard: AdminDashboard,
   users:     UsersPage,
@@ -22,15 +25,16 @@ const PAGES = {
 };
 
 export default function AdminApp() {
-  const [auth, setAuth]         = useState(() => localStorage.getItem("admin_auth") === "true");
+  const { user, isLoggedIn, logout } = useAuth();
   const [activePage, setActive] = useState("dashboard");
 
-  const handleLogout = () => {
-    localStorage.removeItem("admin_auth");
-    setAuth(false);
-  };
+  if (!isLoggedIn || user.role !== "ADMIN") {
+    return <Navigate to="/" replace />;
+  }
 
-  if (!auth) return <AdminLogin onLogin={() => setAuth(true)} />;
+  const handleLogout = () => {
+    logout();
+  };
 
   const PageComponent = PAGES[activePage] || AdminDashboard;
 

@@ -86,13 +86,30 @@ public class UserServiceImp implements UserService {
 
 		User user = Repo.findById(Id).orElseThrow(() -> new RuntimeException("No User Found"));
 
-		user = User.builder().id(Id)
-				.fullname(updatedUser.getFullname())
-				.email(updatedUser.getEmail())
-				.password(passwordEncoder.encode(updatedUser.getPassword()))
-				.contact(updatedUser.getContact())
-				.role(updatedUser.getRole())
-				.build();
+		if (updatedUser.getFullname() != null) user.setFullname(updatedUser.getFullname());
+		if (updatedUser.getEmail() != null) user.setEmail(updatedUser.getEmail());
+		if (updatedUser.getContact() != null) user.setContact(updatedUser.getContact());
+		if (updatedUser.getRole() != null) user.setRole(updatedUser.getRole());
+		
+		if (updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty() && !updatedUser.getPassword().startsWith("$2a$")) {
+			user.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
+		}
+
+		user.setAvatar(updatedUser.getAvatar());
+		user.setBio(updatedUser.getBio());
+		user.setSchool(updatedUser.getSchool());
+		user.setWork(updatedUser.getWork());
+		user.setWantedToGo(updatedUser.getWantedToGo());
+		user.setPets(updatedUser.getPets());
+		user.setDecadeBorn(updatedUser.getDecadeBorn());
+		user.setUselessSkill(updatedUser.getUselessSkill());
+		user.setSong(updatedUser.getSong());
+		user.setFunFact(updatedUser.getFunFact());
+		user.setTimeSpend(updatedUser.getTimeSpend());
+		user.setBioTitle(updatedUser.getBioTitle());
+		user.setLanguages(updatedUser.getLanguages());
+		user.setObsessedWith(updatedUser.getObsessedWith());
+		user.setLive(updatedUser.getLive());
 
 		return Repo.save(user);
 
@@ -107,6 +124,43 @@ public class UserServiceImp implements UserService {
 	@Override
 	public User getUserById(Long Id) throws UserException {
 		return Repo.findById(Id).orElseThrow(() -> new RuntimeException("Not User Found with Id: " + Id));
+	}
+
+	@Override
+	public User becomeHost(Long userId) throws UserException {
+		User user = Repo.findById(userId).orElseThrow(() -> new UserException("User not found with id: " + userId));
+		
+		// If not already HOST or HOST_GUEST, change to HOST_GUEST
+		if (user.getRole() != Role.HOST && user.getRole() != Role.HOST_GUEST) {
+			user.setRole(Role.HOST_GUEST);
+		}
+
+		// Save user first so we have updated role
+		user = Repo.save(user);
+
+		// Check if host profile already exists
+		java.util.Optional<Host> existingHost = Hrepo.findAll().stream()
+				.filter(h -> h.getUser() != null && h.getUser().getId().equals(userId))
+				.findFirst();
+
+		if (existingHost.isEmpty()) {
+			Host host = new Host();
+			host.setUser(user);
+			host.setVerified(true); // Auto-verify for clone convenience
+
+			// Find guest profile to link guest id if exists
+			java.util.Optional<Guest> guestOpt = Grepo.findAll().stream()
+					.filter(g -> g.getUser() != null && g.getUser().getId().equals(userId))
+					.findFirst();
+
+			if (guestOpt.isPresent()) {
+				host.setGuest(guestOpt.get());
+			}
+
+			Hrepo.save(host);
+		}
+
+		return user;
 	}
 
 }

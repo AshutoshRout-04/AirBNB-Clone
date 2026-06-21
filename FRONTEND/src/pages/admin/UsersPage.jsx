@@ -1,19 +1,8 @@
 import { useState } from "react";
 import { Search, CheckCircle, Ban, ShieldCheck, ShieldOff, MoreHorizontal, X } from "lucide-react";
 
-// ── Mock data (friend will replace with real API) ──────────────────────────
-const MOCK_USERS = [
-  { id: 1,  name: "Rohit Sharma",    email: "rohit@email.com",   type: "Guest",  status: "Active",    joined: "2024-01-12", verified: true,  bookings: 8  },
-  { id: 2,  name: "Priya Patel",     email: "priya@email.com",   type: "Host",   status: "Active",    joined: "2023-11-05", verified: true,  bookings: 0  },
-  { id: 3,  name: "Amit Verma",      email: "amit@email.com",    type: "Guest",  status: "Suspended", joined: "2024-02-20", verified: false, bookings: 2  },
-  { id: 4,  name: "Sneha Rao",       email: "sneha@email.com",   type: "Host",   status: "Active",    joined: "2023-09-15", verified: true,  bookings: 0  },
-  { id: 5,  name: "Karan Mehta",     email: "karan@email.com",   type: "Guest",  status: "Active",    joined: "2024-03-01", verified: false, bookings: 5  },
-  { id: 6,  name: "Divya Singh",     email: "divya@email.com",   type: "Host",   status: "Banned",    joined: "2023-08-22", verified: false, bookings: 0  },
-  { id: 7,  name: "Raj Kumar",       email: "raj@email.com",     type: "Guest",  status: "Active",    joined: "2024-04-10", verified: true,  bookings: 12 },
-  { id: 8,  name: "Nisha Gupta",     email: "nisha@email.com",   type: "Host",   status: "Active",    joined: "2023-12-18", verified: true,  bookings: 0  },
-  { id: 9,  name: "Vikram Joshi",    email: "vikram@email.com",  type: "Guest",  status: "Active",    joined: "2024-05-03", verified: false, bookings: 3  },
-  { id: 10, name: "Pooja Mishra",    email: "pooja@email.com",   type: "Host",   status: "Suspended", joined: "2024-01-28", verified: true,  bookings: 0  },
-];
+import { useEffect, useCallback } from "react";
+import { getGuests, getHosts } from "../../services/adminApi";
 
 const STATUS_STYLE = {
   Active:    { bg: "#e6f7f6", color: "#00a699", border: "#b2e4e1" },
@@ -78,16 +67,76 @@ function ActionModal({ user, onClose, onAction }) {
 export default function UsersPage() {
   const [tab, setTab]         = useState("All");
   const [search, setSearch]   = useState("");
-  const [users, setUsers]     = useState(MOCK_USERS);
+  const [users, setUsers]     = useState([]);
+  const [loading, setLoading] = useState(true);
   const [modal, setModal]     = useState(null);
 
   const tabs = ["All", "Guests", "Hosts", "Suspended", "Banned"];
 
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [gRes, hRes] = await Promise.all([getGuests(), getHosts()]);
+      const guests = gRes.data || [];
+      const hosts = hRes.data || [];
+
+      // Map users from guests and hosts
+      const userMap = {};
+
+      guests.forEach(g => {
+        if (g.user) {
+          userMap[g.user.id] = {
+            id: g.user.id,
+            name: g.user.fullname || "Unknown Guest",
+            email: g.user.email,
+            type: "Guest",
+            status: "Active", // Default
+            joined: "2024-01-12", // Default
+            verified: false,
+            bookings: g.totalBookings || 0,
+          };
+        }
+      });
+
+      hosts.forEach(h => {
+        if (h.user) {
+          if (userMap[h.user.id]) {
+            // User is both Guest and Host
+            userMap[h.user.id].type = "Host & Guest";
+            userMap[h.user.id].verified = h.verified;
+          } else {
+            userMap[h.user.id] = {
+              id: h.user.id,
+              name: h.user.fullname || "Unknown Host",
+              email: h.user.email,
+              type: "Host",
+              status: "Active",
+              joined: "2024-01-12",
+              verified: h.verified,
+              bookings: 0,
+            };
+          }
+        }
+      });
+
+      setUsers(Object.values(userMap));
+    } catch (err) {
+      console.error(err);
+      setUsers([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
   const filtered = users.filter(u => {
     const matchesTab =
       tab === "All"       ? true :
-      tab === "Guests"    ? u.type === "Guest" :
-      tab === "Hosts"     ? u.type === "Host" :
+      tab === "Guests"    ? u.type.includes("Guest") :
+      tab === "Hosts"     ? u.type.includes("Host") :
       tab === "Suspended" ? u.status === "Suspended" :
       tab === "Banned"    ? u.status === "Banned" : true;
     const matchesSearch = u.name.toLowerCase().includes(search.toLowerCase()) ||

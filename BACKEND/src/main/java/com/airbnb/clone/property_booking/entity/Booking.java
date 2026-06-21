@@ -53,8 +53,7 @@ public class Booking {
     @ManyToOne
     @JoinColumn(name="Property_Id")
     private Property property;
-    
-    
-    
-    
+
+    @jakarta.persistence.Column(columnDefinition = "TEXT")
+    private String privateNotes;
 }

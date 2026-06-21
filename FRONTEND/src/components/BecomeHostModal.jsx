@@ -1,21 +1,42 @@
-import { useState } from "react"
-import { X, ArrowRight, ArrowLeft, Home, Sparkles, CheckCircle } from "lucide-react"
-import axios from "axios"
 
-const PRESET_IMAGES = [
+import { useState, useEffect } from "react"
+import { X, ArrowRight, ArrowLeft, Home, Sparkles, CheckCircle } from "lucide-react"
+import { useAuth } from "./LoginModal"
+import { becomeHost } from "../services/UserService"
+import { getHostByUserId } from "../services/HostService"
+import { createPropertyForHost } from "../services/PropertyService"
+
+const STAY_PRESETS = [
   { label: "Beachfront Villa", url: "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=800&q=80" },
   { label: "Wood Cabin", url: "https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=800&q=80" },
   { label: "Modern Penthouse", url: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80" },
   { label: "Cozy Lakehouse", url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80" },
 ]
 
+const EXPERIENCE_PRESETS = [
+  { label: "Scuba Diving Adventure", url: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80" },
+  { label: "Local Cooking Masterclass", url: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=800&q=80" },
+  { label: "Guided Mountain Trek", url: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80" },
+  { label: "City History Bike Tour", url: "https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=800&q=80" },
+]
+
+const SERVICE_PRESETS = [
+  { label: "Private Chef Catering", url: "https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=800&q=80" },
+  { label: "Luxury Airport Transfer", url: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80" },
+  { label: "Premium Spa & Wellness", url: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80" },
+  { label: "Professional Photography", url: "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?auto=format&fit=crop&w=800&q=80" },
+]
+
 export default function BecomeHostModal({ onClose, onPropertyAdded }) {
+  const { user, isLoggedIn, updateUserSession, openLogin } = useAuth()
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
 
   // Form states
+  const [propertyType, setPropertyType] = useState("room")
+  const [companyName, setCompanyName] = useState("")
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [location, setLocation] = useState("")
@@ -23,34 +44,139 @@ export default function BecomeHostModal({ onClose, onPropertyAdded }) {
   const [maxGuests, setMaxGuests] = useState(2)
   const [bedrooms, setBedrooms] = useState(1)
   const [bathrooms, setBathrooms] = useState(1)
-  const [imageUrl, setImageUrl] = useState(PRESET_IMAGES[0].url)
+  const [imageUrl, setImageUrl] = useState("")
+
+  // Features / Amenities list based on type
+  const [amenities, setAmenities] = useState([])
+  const [selectedAmenities, setSelectedAmenities] = useState([])
+  const [customAmenity, setCustomAmenity] = useState("")
+
+  // Experience/Service specific details
+  const [durationHours, setDurationHours] = useState("2")
+  const [difficultyLevel, setDifficultyLevel] = useState("beginner") // beginner, intermediate, advanced
+  const [serviceCategory, setServiceCategory] = useState("Chef") // Chef, Driver, Guide, Wellness, Cleaner, Photography
+
+  const getPresets = () => {
+    if (propertyType === "experience") return EXPERIENCE_PRESETS
+    if (propertyType === "service") return SERVICE_PRESETS
+    return STAY_PRESETS
+  }
+
+  // Update default presets and amenities list when type changes
+  useEffect(() => {
+    const presets = getPresets()
+    setImageUrl(presets[0].url)
+
+    if (propertyType === "experience") {
+      setAmenities(["English/Hindi Guide", "Safety Gear Included", "Drinks & Snacks", "Equipment Rental", "Transport Included", "First Aid Kit"])
+      setSelectedAmenities(["Safety Gear Included"])
+    } else if (propertyType === "service") {
+      setAmenities(["Fluent Translator", "Fully Insured", "Equipment Provided", "24/7 Availability", "Child Friendly", "Customisable Plan"])
+      setSelectedAmenities(["Equipment Provided"])
+    } else {
+      setAmenities(["Wifi", "Air Conditioning", "Free Parking", "Kitchen Access", "Pool", "Gym", "Washing Machine"])
+      setSelectedAmenities(["Wifi", "Air Conditioning"])
+    }
+  }, [propertyType])
+
+  // Automatically suggest photo from Unsplash if user types title or service category
+  const handleGenerateAIPhoto = () => {
+    if (!title && !serviceCategory) return
+    const query = encodeURIComponent(propertyType === "service" ? `${serviceCategory} service professional` : title)
+    const newUrl = `https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80` // fallback
+
+    // We construct a dynamic Unsplash source query to simulate the AI generator output
+    const randomSeed = Math.floor(Math.random() * 1000)
+    const dynamicUrl = `https://images.unsplash.com/featured/?${query}&sig=${randomSeed}`
+    setImageUrl(dynamicUrl)
+  }
+
+  const toggleAmenity = (amenity) => {
+    if (selectedAmenities.includes(amenity)) {
+      setSelectedAmenities(selectedAmenities.filter(item => item !== amenity))
+    } else {
+      setSelectedAmenities([...selectedAmenities, amenity])
+    }
+  }
+
+  const addCustomAmenity = (e) => {
+    e.preventDefault()
+    if (customAmenity.trim() && !amenities.includes(customAmenity.trim())) {
+      setAmenities([...amenities, customAmenity.trim()])
+      setSelectedAmenities([...selectedAmenities, customAmenity.trim()])
+      setCustomAmenity("")
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (!isLoggedIn) {
+      setError("Please log in first before listing properties.")
+      openLogin()
+      return
+    }
+
     setLoading(true)
     setError(null)
 
+    // Store custom features/amenities inside description or formatted metadata
+    let enrichedDescription = description
+    if (selectedAmenities.length > 0) {
+      enrichedDescription += `\n\nFeatures/Amenities:\n- ${selectedAmenities.join("\n- ")}`
+    }
+    if (propertyType === "experience") {
+      enrichedDescription += `\n\nDuration: ${durationHours} hours | Difficulty: ${difficultyLevel}`
+    } else if (propertyType === "service") {
+      enrichedDescription += `\n\nService Category: ${serviceCategory}`
+    }
+
     const payload = {
       title,
-      description,
+      description: enrichedDescription,
       location,
       pricePerNight: parseFloat(pricePerNight),
       maxGuests: parseInt(maxGuests),
-      bedrooms: parseInt(bedrooms),
-      bathrooms: parseInt(bathrooms),
+      bedrooms: propertyType === "room" ? parseInt(bedrooms) : 0,
+      bathrooms: propertyType === "room" ? parseInt(bathrooms) : 0,
       available: true,
-      imageUrl // Will be stored on backend or resolved in helper
+      photos: JSON.stringify([{ id: 1, url: imageUrl, caption: title, category: "Cover" }]),
+      propertyType,
+      companyName
     }
 
     try {
-      await axios.post("http://localhost:8086/properties/addProperty", payload)
+      let activeUser = user;
+      // Upgrade role in backend if guest
+      if (activeUser.role !== "HOST" && activeUser.role !== "HOST_GUEST" && activeUser.role !== "ADMIN") {
+        const upgradeRes = await becomeHost(activeUser.id)
+        const dbUser = upgradeRes.data
+        activeUser = {
+          ...activeUser,
+          role: dbUser.role
+        }
+        updateUserSession(activeUser)
+      }
+
+      // Fetch the host profile to get the host id
+      const hostRes = await getHostByUserId(activeUser.id)
+      const hostData = hostRes.data
+
+      if (!hostData || !hostData.id) {
+        throw new Error("Could not retrieve host profile. Please try again.")
+      }
+
+      // Link host ID in localStorage for host dashboard views
+      localStorage.setItem("staybnb_host_id", hostData.id.toString())
+
+      // Create property for host
+      await createPropertyForHost(hostData.id, payload)
       setSuccess(true)
       if (onPropertyAdded) {
         onPropertyAdded()
       }
     } catch (err) {
       console.error(err)
-      setError(err.response?.data?.message || "Failed to create property. Verify database connection.")
+      setError(err.response?.data?.message || err.message || "Failed to create listing.")
     } finally {
       setLoading(false)
     }
@@ -63,7 +189,7 @@ export default function BecomeHostModal({ onClose, onPropertyAdded }) {
         <div className="flex items-center justify-between border-b border-border/60 p-4">
           <span className="flex items-center gap-2 font-bold text-primary">
             <Home size={18} />
-            <span>Airbnb your home</span>
+            <span>Airbnb host dashboard</span>
           </span>
           <button
             onClick={onClose}
@@ -82,7 +208,11 @@ export default function BecomeHostModal({ onClose, onPropertyAdded }) {
             </div>
             <h3 className="text-2xl font-bold">Listing Live!</h3>
             <p className="mt-2 text-sm text-muted-foreground max-w-sm">
-              Your home has been registered and is now listed for guests to search and book.
+              {propertyType === "experience"
+                ? "Your experience has been registered and is now listed for guests to book."
+                : propertyType === "service"
+                  ? "Your service has been registered and is now listed for guests to request."
+                  : "Your home has been registered and is now listed for guests to search and book."}
             </p>
             <button
               onClick={onClose}
@@ -106,13 +236,65 @@ export default function BecomeHostModal({ onClose, onPropertyAdded }) {
               {step === 1 && (
                 <div className="space-y-4 animate-fade-in">
                   <h3 className="text-lg font-bold">Step 1: The Basics</h3>
-                  <p className="text-xs text-muted-foreground">Name your place, add location and set the description.</p>
+                  <p className="text-xs text-muted-foreground">Choose listing type, name your service/experience, location, and details.</p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wide text-foreground">Listing Type</label>
+                      <select
+                        value={propertyType}
+                        onChange={(e) => setPropertyType(e.target.value)}
+                        className="mt-1 w-full rounded-lg border border-border p-2.5 text-sm bg-background text-foreground outline-none focus:border-primary font-semibold"
+                      >
+                        <option value="room">Room / Stay</option>
+                        <option value="experience">Experience</option>
+                        <option value="service">Service</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wide text-foreground">
+                        {propertyType === "room" ? "Company Name (Optional)" : "Service Provider Name"}
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Peak Adventure Tours"
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        className="mt-1 w-full rounded-lg border border-border p-2.5 text-sm bg-transparent outline-none focus:border-primary"
+                      />
+                    </div>
+                  </div>
+
+                  {propertyType === "service" && (
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wide text-foreground">Service Category</label>
+                      <select
+                        value={serviceCategory}
+                        onChange={(e) => setServiceCategory(e.target.value)}
+                        className="mt-1 w-full rounded-lg border border-border p-2.5 text-sm bg-background text-foreground outline-none focus:border-primary font-semibold"
+                      >
+                        <option value="Chef">Private Chef / Catering</option>
+                        <option value="Driver">Chauffeur / Airport Transport</option>
+                        <option value="Guide">Tour Guide / Translator</option>
+                        <option value="Wellness">Massage & Spa Professional</option>
+                        <option value="Cleaner">Premium Housekeeping</option>
+                        <option value="Photography">Vacation Photographer</option>
+                      </select>
+                    </div>
+                  )}
+
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wide text-foreground">Title</label>
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Cozy Log Cabin with Jacuzzi"
+                      placeholder={
+                        propertyType === "experience"
+                          ? "e.g. Hidden Waterfalls Guided Trek & Picnic"
+                          : propertyType === "service"
+                            ? "e.g. Premium 5-Course Italian Dinners Cooked at Your Stay"
+                            : "e.g. Cozy Log Cabin with Jacuzzi"
+                      }
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       className="mt-1 w-full rounded-lg border border-border p-2.5 text-sm bg-transparent outline-none focus:border-primary"
@@ -134,7 +316,7 @@ export default function BecomeHostModal({ onClose, onPropertyAdded }) {
                     <textarea
                       required
                       rows={3}
-                      placeholder="Describe the vibes, layout, amenities..."
+                      placeholder="Describe the experience flow, service details, requirements, etc."
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       className="mt-1 w-full rounded-lg border border-border p-2.5 text-sm bg-transparent outline-none focus:border-primary"
@@ -146,14 +328,18 @@ export default function BecomeHostModal({ onClose, onPropertyAdded }) {
               {/* Step 2: Specs */}
               {step === 2 && (
                 <div className="space-y-4 animate-fade-in">
-                  <h3 className="text-lg font-bold">Step 2: Capacity & Specifications</h3>
-                  <p className="text-xs text-muted-foreground">Help travelers check if your home matches their group size.</p>
+                  <h3 className="text-lg font-bold">Step 2: Features & Specifications</h3>
 
-                  <div className="flex flex-col gap-4">
-                    <div className="flex items-center justify-between border-b border-border pb-3">
+                  {/* Dynamic Capacity Selectors */}
+                  <div className="flex flex-col gap-4 border-b border-border pb-4">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <span className="block font-semibold text-sm">Guests Capacity</span>
-                        <span className="text-xs text-muted-foreground">Maximum guests allowed</span>
+                        <span className="block font-semibold text-sm">
+                          {propertyType === "experience" ? "Group Capacity" : propertyType === "service" ? "Max Clients" : "Guests Capacity"}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {propertyType === "experience" ? "Maximum participants per group" : propertyType === "service" ? "Maximum booking capacity per slot" : "Maximum guests allowed"}
+                        </span>
                       </div>
                       <div className="flex items-center gap-3">
                         <button
@@ -174,52 +360,73 @@ export default function BecomeHostModal({ onClose, onPropertyAdded }) {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between border-b border-border pb-3">
-                      <div>
-                        <span className="block font-semibold text-sm">Bedrooms</span>
-                        <span className="text-xs text-muted-foreground">Available bedrooms</span>
+                    {propertyType === "experience" && (
+                      <div className="grid grid-cols-2 gap-4 pt-2">
+                        <div>
+                          <label className="block text-xs font-bold uppercase tracking-wide text-foreground">Duration (Hours)</label>
+                          <input
+                            type="number"
+                            min={1}
+                            max={72}
+                            value={durationHours}
+                            onChange={(e) => setDurationHours(e.target.value)}
+                            className="mt-1 w-full rounded-lg border border-border p-2 text-sm bg-transparent outline-none focus:border-primary"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold uppercase tracking-wide text-foreground">Difficulty Level</label>
+                          <select
+                            value={difficultyLevel}
+                            onChange={(e) => setDifficultyLevel(e.target.value)}
+                            className="mt-1 w-full rounded-lg border border-border p-2 text-sm bg-background text-foreground outline-none focus:border-primary"
+                          >
+                            <option value="beginner">Beginner Friendly</option>
+                            <option value="intermediate">Moderate</option>
+                            <option value="advanced">Challenging / Pro</option>
+                          </select>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3">
+                    )}
+                  </div>
+
+                  {/* Amenities / Key Features Checklist */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold uppercase tracking-wide text-foreground">
+                      {propertyType === "experience" ? "What's Included" : propertyType === "service" ? "Key Service Features" : "Amenities"}
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {amenities.map((item) => (
                         <button
+                          key={item}
                           type="button"
-                          onClick={() => setBedrooms(Math.max(1, bedrooms - 1))}
-                          className="h-8 w-8 rounded-full border border-border flex items-center justify-center hover:bg-muted font-bold"
+                          onClick={() => toggleAmenity(item)}
+                          className={`flex items-center gap-2 p-2 border rounded-lg text-xs font-medium cursor-pointer transition text-left ${selectedAmenities.includes(item)
+                            ? "border-primary bg-primary/5 text-primary"
+                            : "border-border hover:bg-muted"
+                            }`}
                         >
-                          -
+                          <span className="h-2 w-2 rounded-full bg-current" />
+                          <span>{item}</span>
                         </button>
-                        <span className="font-semibold text-sm w-4 text-center">{bedrooms}</span>
-                        <button
-                          type="button"
-                          onClick={() => setBedrooms(bedrooms + 1)}
-                          className="h-8 w-8 rounded-full border border-border flex items-center justify-center hover:bg-muted font-bold"
-                        >
-                          +
-                        </button>
-                      </div>
+                      ))}
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="block font-semibold text-sm">Bathrooms</span>
-                        <span className="text-xs text-muted-foreground">Available bathrooms</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setBathrooms(Math.max(1, bathrooms - 1))}
-                          className="h-8 w-8 rounded-full border border-border flex items-center justify-center hover:bg-muted font-bold"
-                        >
-                          -
-                        </button>
-                        <span className="font-semibold text-sm w-4 text-center">{bathrooms}</span>
-                        <button
-                          type="button"
-                          onClick={() => setBathrooms(bathrooms + 1)}
-                          className="h-8 w-8 rounded-full border border-border flex items-center justify-center hover:bg-muted font-bold"
-                        >
-                          +
-                        </button>
-                      </div>
+                    {/* Add Custom Amenity Form */}
+                    <div className="flex gap-2 pt-2">
+                      <input
+                        type="text"
+                        placeholder="Add custom item..."
+                        value={customAmenity}
+                        onChange={(e) => setCustomAmenity(e.target.value)}
+                        className="flex-1 rounded-lg border border-border p-2 text-xs bg-transparent outline-none focus:border-primary"
+                      />
+                      <button
+                        type="button"
+                        onClick={addCustomAmenity}
+                        className="px-3 py-2 bg-muted text-foreground border border-border rounded-lg text-xs font-bold hover:bg-muted/80"
+                      >
+                        Add
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -229,14 +436,16 @@ export default function BecomeHostModal({ onClose, onPropertyAdded }) {
               {step === 3 && (
                 <div className="space-y-4 animate-fade-in">
                   <h3 className="text-lg font-bold">Step 3: Pricing & Style</h3>
-                  <p className="text-xs text-muted-foreground">Select a cover photo theme and set your nightly price.</p>
+                  <p className="text-xs text-muted-foreground">Select a cover photo theme or use our dynamic generator, and set your price.</p>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wide text-foreground">Nightly Rate (₹)</label>
+                    <label className="block text-xs font-bold uppercase tracking-wide text-foreground">
+                      {propertyType === "experience" ? "Price per Person (₹)" : propertyType === "service" ? "Price per Hour/Service (₹)" : "Nightly Rate (₹)"}
+                    </label>
                     <input
                       type="number"
                       required
-                      placeholder="e.g. 4500"
+                      placeholder={propertyType === "experience" ? "e.g. 1500" : propertyType === "service" ? "e.g. 2000" : "e.g. 4500"}
                       min={100}
                       value={pricePerNight}
                       onChange={(e) => setPricePerNight(e.target.value)}
@@ -244,35 +453,58 @@ export default function BecomeHostModal({ onClose, onPropertyAdded }) {
                     />
                   </div>
 
+                  {/* AI Photo Generator Section */}
+                  <div className="border border-primary/20 rounded-xl p-3 bg-primary/5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="block text-xs font-bold text-primary uppercase tracking-wide">AI Photo Generator</span>
+                        <span className="text-[10px] text-muted-foreground">Generates a relevant Unsplash cover based on your listing details.</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleGenerateAIPhoto}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-bold hover:opacity-95"
+                      >
+                        <Sparkles size={12} /> Generate
+                      </button>
+                    </div>
+                  </div>
+
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wide text-foreground mb-2">Cover Photo Preset</label>
+                    <label className="block text-xs font-bold uppercase tracking-wide text-foreground mb-2">Preset Options</label>
                     <div className="grid grid-cols-2 gap-2">
-                      {PRESET_IMAGES.map((img) => (
+                      {getPresets().map((img) => (
                         <button
                           key={img.label}
                           type="button"
                           onClick={() => setImageUrl(img.url)}
-                          className={`relative rounded-xl overflow-hidden border-2 text-left cursor-pointer transition ${
-                            imageUrl === img.url ? "border-primary ring-2 ring-primary/20" : "border-transparent"
-                          }`}
+                          className={`relative rounded-xl overflow-hidden border-2 text-left cursor-pointer transition ${imageUrl === img.url ? "border-primary ring-2 ring-primary/20" : "border-transparent"
+                            }`}
                         >
-                          <img src={img.url} alt={img.label} className="h-24 w-full object-cover" />
-                          <span className="absolute bottom-0 inset-x-0 bg-black/60 px-2 py-1 text-[10px] font-bold text-white uppercase">{img.label}</span>
+                          <img src={img.url} alt={img.label} className="h-20 w-full object-cover" />
+                          <span className="absolute bottom-0 inset-x-0 bg-black/60 px-2 py-1 text-[9px] font-bold text-white uppercase truncate">{img.label}</span>
                         </button>
                       ))}
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wide text-foreground">Or Custom Image URL</label>
+                    <label className="block text-xs font-bold uppercase tracking-wide text-foreground">Or Selected Image URL</label>
                     <input
                       type="url"
                       placeholder="https://images.unsplash.com/..."
                       value={imageUrl}
                       onChange={(e) => setImageUrl(e.target.value)}
-                      className="mt-1 w-full rounded-lg border border-border p-2.5 text-sm bg-transparent outline-none focus:border-primary"
+                      className="mt-1 w-full rounded-lg border border-border p-2.5 text-sm bg-transparent outline-none focus:border-primary text-xs"
                     />
                   </div>
+
+                  {imageUrl && (
+                    <div className="pt-2">
+                      <span className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Preview Selected Photo</span>
+                      <img src={imageUrl} alt="Preview" className="h-28 w-full object-cover rounded-lg border" />
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -311,7 +543,7 @@ export default function BecomeHostModal({ onClose, onPropertyAdded }) {
                   disabled={loading}
                   className="flex items-center gap-1.5 px-6 py-2.5 bg-primary text-primary-foreground rounded-full text-sm font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 cursor-pointer"
                 >
-                  {loading ? "Publishing..." : "Publish Home"} <Sparkles size={16} />
+                  {loading ? "Publishing..." : propertyType === "experience" ? "Publish Experience" : propertyType === "service" ? "Publish Service" : "Publish Home"} <Sparkles size={16} />
                 </button>
               )}
             </div>
@@ -321,3 +553,4 @@ export default function BecomeHostModal({ onClose, onPropertyAdded }) {
     </div>
   )
 }
+

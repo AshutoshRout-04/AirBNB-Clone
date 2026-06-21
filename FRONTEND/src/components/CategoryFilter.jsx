@@ -11,10 +11,14 @@ import {
   Compass,
   ChevronLeft,
   ChevronRight,
+  Sparkles,
+  Briefcase,
 } from "lucide-react"
 
 export const CATEGORIES = [
-  { id: "all", label: "All homes", icon: Compass },
+  { id: "all", label: "All stays", icon: Compass },
+  { id: "experiences", label: "Experiences", icon: Sparkles },
+  { id: "services", label: "Services", icon: Briefcase },
   { id: "trending", label: "Trending", icon: Flame },
   { id: "beachfront", label: "Beachfront", icon: Waves },
   { id: "cabins", label: "Cabins", icon: Home },

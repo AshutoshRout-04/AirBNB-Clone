@@ -1,7 +1,7 @@
 package com.airbnb.clone.property_listing.controller;
 
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -22,11 +22,14 @@ import com.airbnb.clone.property_listing.service.Property_Service;
 @RestController
 @RequestMapping("/properties")
 public class Property_Controller {
-    @Autowired
-    private Property_Service propertyService;
+    private final Property_Service propertyService;
 
-    @Autowired
-    private HostRepository hostRepository;
+    private final HostRepository hostRepository;
+
+    Property_Controller(Property_Service propertyService, HostRepository hostRepository) {
+        this.propertyService = propertyService;
+        this.hostRepository = hostRepository;
+    }
 
     // Create a property linked to a specific host
     @PostMapping("/addProperty/{hostId}")
@@ -56,6 +59,16 @@ public class Property_Controller {
     public ResponseEntity<String> updateProperty(@PathVariable Long id, @RequestBody Property property) {
         propertyService.updateProperty(id, property);
         return ResponseEntity.ok("Property updated successfully");
+    }
+
+    @GetMapping("/by-host/{hostId}")
+    public ResponseEntity<List<Property>> getPropertiesByHostId(@PathVariable Long hostId) {
+        return ResponseEntity.ok(propertyService.getPropertiesByHostId(hostId));
+    }
+
+    @GetMapping("/by-type/{type}")
+    public ResponseEntity<List<Property>> getPropertiesByType(@PathVariable String type) {
+        return ResponseEntity.ok(propertyService.getPropertiesByType(type));
     }
 
     @DeleteMapping("/delete/{id}")

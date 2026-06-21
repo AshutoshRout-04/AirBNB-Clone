@@ -11,11 +11,36 @@ const STATUS_STYLE = {
 };
 
 const COLUMNS = [
-  { key: "id",         label: "ID" },
-  { key: "checkIn",    label: "Check-in" },
-  { key: "checkOut",   label: "Check-out" },
+  { key: "bookingId",   label: "ID" },
   {
-    key: "totalPrice", label: "Total",
+    key: "guest",
+    label: "User",
+    render: (_, row) => {
+      const name = row?.guest?.user?.fullname || row?.guest?.user?.name || "Guest User";
+      const email = row?.guest?.user?.email;
+      return (
+        <div>
+          <div style={{ fontWeight: 600, color: "#222" }}>{name}</div>
+          {email && <div style={{ fontSize: 11, color: "#717171" }}>{email}</div>}
+        </div>
+      );
+    }
+  },
+  {
+    key: "property",
+    label: "Property",
+    render: (_, row) => {
+      return (
+        <div style={{ maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {row?.property?.title || "—"}
+        </div>
+      );
+    }
+  },
+  { key: "checkInDate",  label: "Check-in" },
+  { key: "checkOutDate", label: "Check-out" },
+  {
+    key: "totalAmount", label: "Total",
     render: (v) => v
       ? <span style={{ fontWeight: 600, color: "#222222" }}>₹{Number(v).toLocaleString()}</span>
       : "—",
@@ -42,7 +67,15 @@ export default function BookingsPage() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    try { const res = await getBookings(); setRows(res.data || []); }
+    try {
+      const res = await getBookings();
+      // Map bookingId to a standard 'id' property so the DataTable component's delete / tracking logic works correctly
+      const mapped = (res.data || []).map(b => ({
+        ...b,
+        id: b.bookingId
+      }));
+      setRows(mapped);
+    }
     catch { setRows([]); }
     finally { setLoading(false); }
   }, []);
@@ -51,7 +84,7 @@ export default function BookingsPage() {
 
   const handleDelete = async (id) => {
     await deleteBooking(id);
-    setRows(prev => prev.filter(r => r.id !== id));
+    setRows(prev => prev.filter(r => r.bookingId !== id));
   };
 
   return (

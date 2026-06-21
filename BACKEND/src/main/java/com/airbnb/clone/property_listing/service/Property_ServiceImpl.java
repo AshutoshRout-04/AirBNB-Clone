@@ -43,10 +43,31 @@ public Property updateProperty(Long id, Property property) {
     existingProperty.setBedrooms(property.getBedrooms());
     existingProperty.setBathrooms(property.getBathrooms());
     existingProperty.setAvailable(property.isAvailable());
+    
+    // Copy the extended host features fields
+    existingProperty.setAmenities(property.getAmenities());
+    existingProperty.setPhotos(property.getPhotos());
+    existingProperty.setWifiNetwork(property.getWifiNetwork());
+    existingProperty.setWifiPassword(property.getWifiPassword());
+    existingProperty.setCheckInMethod(property.getCheckInMethod());
+    existingProperty.setCheckInInstructions(property.getCheckInInstructions());
+    existingProperty.setHouseRules(property.getHouseRules());
+    existingProperty.setPropertyType(property.getPropertyType());
+    existingProperty.setCompanyName(property.getCompanyName());
 
     return propertyRepository.save(existingProperty);
 }
     
+    @Override
+    public List<Property> getPropertiesByHostId(Long hostId) {
+        return propertyRepository.findByHostId(hostId);
+    }
+
+    @Override
+    public List<Property> getPropertiesByType(String propertyType) {
+        return propertyRepository.findByPropertyType(propertyType);
+    }
+
     @Override
     public String deleteProperty(Long id) {
         propertyRepository.deleteById(id);

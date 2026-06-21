@@ -44,6 +44,11 @@ public class BookingController {
                                 bookingService.getAllBookings());
         }
 
+        @GetMapping("/user/{userId}")
+        public ResponseEntity<List<Booking>> getBookingsByUserId(@PathVariable Long userId) {
+                return ResponseEntity.ok(bookingService.getBookingsByUserId(userId));
+        }
+
         @PutMapping("/{bookingId}")
         public ResponseEntity<Booking> updateBooking(
                         @PathVariable Long bookingId,
@@ -53,6 +58,11 @@ public class BookingController {
                                 bookingService.updateBooking(
                                                 bookingId,
                                                 booking));
+        }
+
+        @GetMapping("/host/{hostId}")
+        public ResponseEntity<List<Booking>> getBookingsByHostId(@PathVariable Long hostId) {
+                return ResponseEntity.ok(bookingService.getBookingsByHostId(hostId));
         }
 
         @DeleteMapping("/{bookingId}")

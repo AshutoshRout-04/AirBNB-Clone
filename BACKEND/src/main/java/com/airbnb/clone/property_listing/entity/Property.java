@@ -13,6 +13,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
@@ -50,20 +51,36 @@ public class Property {
     @Positive(message = "Price per night must be positive")
     private float pricePerNight;
 
-    @Positive(message = "Max guests must be positive")
+    @Min(value = 1, message = "Max guests must be at least 1")
     private int maxGuests;
 
-    @Positive(message = "No of Bedrooms must be positive")
+    @Min(value = 0, message = "No of Bedrooms can't be negative")
     private int bedrooms;
 
-    @Positive(message = "No of Bathrooms must be positive")
+    @Min(value = 0, message = "No of Bathrooms can't be negative")
     private int bathrooms;
 
     private boolean available;
-    
-    
+
+    @Column(columnDefinition = "TEXT")
+    private String amenities;
+
+    @Column(columnDefinition = "TEXT")
+    private String photos;
+
+    private String wifiNetwork;
+    private String wifiPassword;
+    private String checkInMethod;
+
+    @Column(columnDefinition = "TEXT")
+    private String checkInInstructions;
+
+    @Column(columnDefinition = "TEXT")
+    private String houseRules;
+
     //Dibya thinks you should add a PropertyType field here to help with frontend styling
-    
+    private String propertyType;
+    private String companyName;
     
     
     // Added Property mapping

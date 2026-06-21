@@ -1,7 +1,7 @@
 package com.airbnb.clone.User.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,14 +17,14 @@ import com.airbnb.clone.User.Service.UserService;
 
 import lombok.RequiredArgsConstructor;
 
+@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/user")
 public class UserController {
 	
-	@Autowired
-	private UserService Service;
-	
+	private final UserService Service;
+
 	@PostMapping("/public/register")
 	public ResponseEntity<User> Register(@RequestBody User User) throws UserException  {
 		return ResponseEntity.ok(Service.Register(User));
@@ -33,6 +33,11 @@ public class UserController {
 	@GetMapping("/getUser/{Id}")
 	public ResponseEntity<User> GetUser(@PathVariable Long Id) throws UserException  {
 		return ResponseEntity.ok(Service.getUserById(Id));
+	}
+	
+	@GetMapping("/getByEmail/{email}")
+	public ResponseEntity<User> getUserByEmail(@PathVariable String email) {
+		return ResponseEntity.ok(Service.getUserByEmail(email));
 	}
 	
 	@DeleteMapping("/deleteUser/{Id}")
@@ -48,4 +53,8 @@ public class UserController {
 		return ResponseEntity.ok(Service.Update(Id, User));
 	}
 	
+	@PostMapping("/become-host/{userId}")
+	public ResponseEntity<User> becomeHost(@PathVariable Long userId) throws UserException {
+		return ResponseEntity.ok(Service.becomeHost(userId));
+	}
 }

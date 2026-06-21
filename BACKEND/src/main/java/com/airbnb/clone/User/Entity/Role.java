@@ -4,5 +4,6 @@ public enum Role {
 
 	HOST,
 	GUEST,
-	ADMIN
+	ADMIN,
+	HOST_GUEST
 }

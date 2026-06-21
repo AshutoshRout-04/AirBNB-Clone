@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react"
-import { X, Trash2, Calendar, ShieldAlert, RefreshCw, AlertTriangle } from "lucide-react"
-import { getAllBookings, deleteBooking } from "../services/BookingService"
+import { X, Trash2, Calendar, ShieldAlert, RefreshCw } from "lucide-react"
+import { getBookingsByUserId, deleteBooking } from "../services/BookingService"
 import { getPropertyImages } from "../services/ImageHelper"
 import { useToast } from "./Toast"
+import { useAuth } from "./LoginModal"
 
 export default function BookingsDrawer({ isOpen, onClose, properties }) {
   const toast = useToast()
+  const { user } = useAuth()
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -13,10 +15,11 @@ export default function BookingsDrawer({ isOpen, onClose, properties }) {
   const [confirmCancelId, setConfirmCancelId] = useState(null)
 
   const fetchBookings = async () => {
+    if (!user?.id) return
     setLoading(true)
     setError(null)
     try {
-      const response = await getAllBookings()
+      const response = await getBookingsByUserId(user.id)
       setBookings(response.data || [])
     } catch (err) {
       console.error(err)

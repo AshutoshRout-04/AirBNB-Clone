@@ -1,19 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Search, ArrowUpRight, ArrowDownLeft, RefreshCw, DollarSign, CreditCard, TrendingUp, Clock } from "lucide-react";
-
-// ── Mock data ──────────────────────────────────────────────────────────────
-const MOCK_TRANSACTIONS = [
-  { id: "TXN001", type: "Booking",  user: "Rohit Sharma",   amount: 8500,  fee: 850,  status: "Completed", date: "2024-06-01" },
-  { id: "TXN002", type: "Payout",   user: "Priya Patel",    amount: 7650,  fee: 0,    status: "Processed", date: "2024-06-02" },
-  { id: "TXN003", type: "Refund",   user: "Amit Verma",     amount: 4200,  fee: 0,    status: "Pending",   date: "2024-06-03" },
-  { id: "TXN004", type: "Booking",  user: "Karan Mehta",    amount: 15000, fee: 1500, status: "Completed", date: "2024-06-04" },
-  { id: "TXN005", type: "Payout",   user: "Sneha Rao",      amount: 13500, fee: 0,    status: "Pending",   date: "2024-06-05" },
-  { id: "TXN006", type: "Booking",  user: "Raj Kumar",      amount: 3800,  fee: 380,  status: "Completed", date: "2024-06-06" },
-  { id: "TXN007", type: "Refund",   user: "Vikram Joshi",   amount: 6500,  fee: 0,    status: "Completed", date: "2024-06-07" },
-  { id: "TXN008", type: "Booking",  user: "Pooja Mishra",   amount: 2800,  fee: 280,  status: "Failed",    date: "2024-06-08" },
-  { id: "TXN009", type: "Payout",   user: "Nisha Gupta",    amount: 9200,  fee: 0,    status: "Processed", date: "2024-06-09" },
-  { id: "TXN010", type: "Booking",  user: "Divya Singh",    amount: 5500,  fee: 550,  status: "Completed", date: "2024-06-10" },
-];
+import { getBookings } from "../../services/adminApi";
 
 const TYPE_STYLE = {
   Booking: { bg: "#e6f7f6", color: "#00a699", border: "#b2e4e1", icon: ArrowUpRight },
@@ -28,23 +15,100 @@ const STATUS_STYLE = {
   Failed:    { bg: "#fff0f2", color: "#ff385c", border: "#ffccd5" },
 };
 
-const STATS = [
-  { label: "Total Revenue",     value: "₹1,24,800", sub: "+12% this month",   icon: TrendingUp,  color: "#00a699", bg: "#e6f7f6" },
-  { label: "Pending Payouts",   value: "₹22,650",   sub: "3 awaiting process", icon: Clock,       color: "#fc642d", bg: "#fff8e7" },
-  { label: "Refunds Issued",    value: "₹10,700",   sub: "2 this week",        icon: RefreshCw,   color: "#ff385c", bg: "#fff0f2" },
-  { label: "Platform Fees",     value: "₹11,560",   sub: "Collected this month",icon: CreditCard,  color: "#484848", bg: "#f7f7f7" },
-];
-
 export default function PaymentsPage() {
-  const [tab, setTab]       = useState("All");
+  const [tab, setTab]         = useState("All");
   const [search, setSearch] = useState("");
-  const [txns, setTxns]     = useState(MOCK_TRANSACTIONS);
+  const [txns, setTxns]     = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats]     = useState([
+    { label: "Total Revenue",     value: "₹0", sub: "Based on confirmed bookings", icon: TrendingUp,  color: "#00a699", bg: "#e6f7f6" },
+    { label: "Pending Payouts",   value: "₹0",   sub: "Awaiting process", icon: Clock,       color: "#fc642d", bg: "#fff8e7" },
+    { label: "Refunds Issued",    value: "₹0",   sub: "Cancelled bookings",        icon: RefreshCw,   color: "#ff385c", bg: "#fff0f2" },
+    { label: "Platform Fees",     value: "₹0",   sub: "10% Platform fee",icon: CreditCard,  color: "#484848", bg: "#f7f7f7" },
+  ]);
 
   const tabs = ["All", "Booking", "Payout", "Refund"];
 
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await getBookings();
+      const bookings = res.data || [];
+      
+      let totalRevenue = 0;
+      let pendingPayouts = 0;
+      let refunds = 0;
+      let platformFees = 0;
+      let pendingCount = 0;
+
+      const generatedTxns = [];
+
+      bookings.forEach(b => {
+        const guestName = b.guest?.user?.fullname || "Unknown Guest";
+        const hostName = b.property?.host_Id?.user?.fullname || b.property?.host_id?.user?.fullname || "Unknown Host";
+        const amount = Number(b.totalPrice || 0);
+        const fee = amount * 0.1;
+
+        // 1. Booking Transaction (Guest -> Platform)
+        let bookingStatus = "Pending";
+        if (b.status === "CONFIRMED" || b.status === "COMPLETED") {
+          bookingStatus = "Completed";
+          totalRevenue += amount;
+          platformFees += fee;
+        } else if (b.status === "CANCELLED") {
+          bookingStatus = "Failed";
+          refunds += amount;
+        } else {
+          pendingCount++;
+          pendingPayouts += amount;
+        }
+
+        generatedTxns.push({
+          id: `TXN-BK-${b.id}`,
+          type: "Booking",
+          user: guestName,
+          amount: amount,
+          fee: fee,
+          status: bookingStatus,
+          date: b.checkIn || "N/A"
+        });
+
+        // 2. Host Payout Transaction (Platform -> Host) if confirmed
+        if (bookingStatus === "Completed") {
+          generatedTxns.push({
+            id: `TXN-PO-${b.id}`,
+            type: "Payout",
+            user: hostName,
+            amount: amount - fee,
+            fee: 0,
+            status: "Processed",
+            date: b.checkOut || "N/A"
+          });
+        }
+      });
+
+      setTxns(generatedTxns);
+      setStats([
+        { label: "Total Revenue",     value: `₹${totalRevenue.toLocaleString()}`, sub: `From confirmed bookings`, icon: TrendingUp,  color: "#00a699", bg: "#e6f7f6" },
+        { label: "Pending Payouts",   value: `₹${pendingPayouts.toLocaleString()}`,   sub: `${pendingCount} bookings pending`, icon: Clock,       color: "#fc642d", bg: "#fff8e7" },
+        { label: "Refunds Issued",    value: `₹${refunds.toLocaleString()}`,   sub: "From cancelled bookings",        icon: RefreshCw,   color: "#ff385c", bg: "#fff0f2" },
+        { label: "Platform Fees",     value: `₹${platformFees.toLocaleString()}`,   sub: "10% Platform fee collected",icon: CreditCard,  color: "#484848", bg: "#f7f7f7" },
+      ]);
+    } catch (err) {
+      console.error(err);
+      setTxns([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
   const filtered = txns.filter(t => {
     const matchTab    = tab === "All" ? true : t.type === tab;
-    const matchSearch = t.user.toLowerCase().includes(search.toLowerCase()) || t.id.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = t.user?.toLowerCase().includes(search.toLowerCase()) || t.id.toLowerCase().includes(search.toLowerCase());
     return matchTab && matchSearch;
   });
 
@@ -65,7 +129,7 @@ export default function PaymentsPage() {
 
       {/* Stat cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14, marginBottom: 28 }}>
-        {STATS.map(s => (
+        {stats.map(s => (
           <div key={s.label} style={{ background: "#fff", border: "1px solid #ddd", borderRadius: 14, padding: "20px", boxShadow: "0 2px 6px rgba(0,0,0,0.05)" }}>
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
               <div>

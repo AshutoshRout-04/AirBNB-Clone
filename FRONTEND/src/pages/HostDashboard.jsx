@@ -7,9 +7,11 @@ import CalendarTab from "../components/host/CalendarTab"
 import ListingsTab from "../components/host/ListingsTab"
 import MessagesTab from "../components/host/MessagesTab"
 import MenuTab from "../components/host/MenuTab"
+import { useAuth } from "../components/LoginModal"
 
 export default function HostDashboard({ onSwitchToGuest }) {
   const toast = useToast()
+  const { user } = useAuth()
   
   // Active Tab state: 'today' | 'calendar' | 'listings' | 'messages' | 'menu'
   const [activeTab, setActiveTab] = useState("today")
@@ -142,15 +144,15 @@ export default function HostDashboard({ onSwitchToGuest }) {
                 className="flex items-center gap-1.5 border border-border p-1.5 rounded-full hover:shadow transition cursor-pointer bg-card"
               >
                 <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#fdecd2] text-[#784e1b] font-bold text-xs border border-[#f3d9b4]">
-                  A
+                  {user?.name ? user.name.charAt(0).toUpperCase() : "H"}
                 </div>
                 <ChevronDown size={14} className="text-muted-foreground" />
               </button>
-
+ 
               {showProfileMenu && (
                 <div className="absolute right-0 mt-2 w-56 rounded-xl border border-border bg-card py-2 shadow-xl z-50 text-left text-foreground">
                   <div className="px-4 py-2 border-b border-border/60">
-                    <span className="block font-bold text-xs">Ashutosh Rout</span>
+                    <span className="block font-bold text-xs">{user?.name || "Host"}</span>
                     <span className="block text-[10px] text-muted-foreground">Host account</span>
                   </div>
                   

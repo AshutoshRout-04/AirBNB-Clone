@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 import com.airbnb.clone.Guest.Entity.Guest;
 import com.airbnb.clone.Guest.Service.GuestService;
@@ -21,6 +22,7 @@ import com.airbnb.clone.property_listing.service.Property_Service;
 
 import lombok.RequiredArgsConstructor;
 
+@CrossOrigin
 @RestController
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor

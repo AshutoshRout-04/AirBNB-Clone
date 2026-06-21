@@ -11,6 +11,10 @@ import BecomeHostModal from "../components/BecomeHostModal"
 import BookingsDrawer from "../components/BookingsDrawer"
 import { getAllProperties } from "../services/PropertyService"
 import { useToast } from "../components/Toast"
+import { useAuth } from "../components/LoginModal"
+
+import ExperiencesSection from "../components/ExperiencesSection"
+import ServicesSection from "../components/ServicesSection"
 
 export default function Home({ onSwitchToHost }) {
   const toast = useToast()
@@ -116,12 +120,26 @@ export default function Home({ onSwitchToHost }) {
     priceRange,
   })
 
+  const { user, isLoggedIn } = useAuth()
+
+  const handleSwitchToHostMode = () => {
+    if (isLoggedIn && (user.role === "HOST" || user.role === "HOST_GUEST")) {
+      onSwitchToHost()
+    } else {
+      setShowHostModal(true)
+    }
+  }
+
+  // Extract experiences and services for the showcase sections
+  const experienceProperties = properties.filter((p) => p.propertyType === "experience")
+  const serviceProperties = properties.filter((p) => p.propertyType === "service")
+
   return (
     <div className="min-h-screen bg-background flex flex-col justify-between font-sans">
       <div>
         {/* Header */}
         <Header
-          onSwitchToHost={onSwitchToHost}
+          onSwitchToHost={handleSwitchToHostMode}
           onOpenHostModal={() => setShowHostModal(true)}
           onOpenBookingsDrawer={() => setShowBookingsDrawer(true)}
           onFocusSearch={handleFocusSearch}
@@ -139,6 +157,26 @@ export default function Home({ onSwitchToHost }) {
             searchInputsRef={searchInputsRef}
             properties={properties}
           />
+
+          {/* Airbnb Experiences Showcase */}
+          {!loading && experienceProperties.length > 0 && (
+            <div className="mb-12">
+              <ExperiencesSection 
+                properties={experienceProperties} 
+                onSelectProperty={(property) => setSelectedProperty(property)} 
+              />
+            </div>
+          )}
+
+          {/* Airbnb Services Showcase */}
+          {!loading && serviceProperties.length > 0 && (
+            <div className="mb-12">
+              <ServicesSection 
+                properties={serviceProperties} 
+                onSelectProperty={(property) => setSelectedProperty(property)} 
+              />
+            </div>
+          )}
 
           {/* Category horizontal scroll */}
           <CategoryFilter

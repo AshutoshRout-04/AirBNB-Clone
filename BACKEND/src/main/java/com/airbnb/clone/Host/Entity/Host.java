@@ -43,7 +43,11 @@ public class Host {
 
     @OneToOne
     @JoinColumn(name="User_id")
-   private User user;
+    private User user;
+
+    @OneToOne
+    @JoinColumn(name="Guest_id")
+    private com.airbnb.clone.Guest.Entity.Guest guest;
     
     @OneToMany(mappedBy = "Host_Id")
     @com.fasterxml.jackson.annotation.JsonIgnore

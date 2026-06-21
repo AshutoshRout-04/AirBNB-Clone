@@ -30,6 +30,24 @@ const LOFT_IMAGES = [
   "https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=800&q=80"
 ];
 
+// Experience-specific images (outdoor adventures, cultural activities, tours)
+const EXPERIENCE_IMAGES = [
+  "https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=800&q=80"
+];
+
+// Service-specific images (spa, wellness, professional services)
+const SERVICE_IMAGES = [
+  "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1560066984-138daaa4e74b?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1519416645881-b6a3a5da9eff?auto=format&fit=crop&w=800&q=80"
+];
+
 const MOCK_AMENITIES = [
   { name: "Wi-Fi", icon: "wifi" },
   { name: "Kitchen", icon: "utensils" },
@@ -52,34 +70,55 @@ export const getPropertyImages = (property) => {
     property.thumbnail ||
     (Array.isArray(property.images) ? property.images[0] : undefined);
 
-  const title = (property.title || "").toLowerCase();
-  const desc = (property.description || "").toLowerCase();
-  const loc = (property.location || "").toLowerCase();
-
-  let pool = BEACH_IMAGES;
-  if (title.includes("cabin") || desc.includes("cabin") || title.includes("wood") || desc.includes("wood") || title.includes("forest") || desc.includes("forest") || title.includes("mountain") || desc.includes("mountain") || loc.includes("manali")) {
-    pool = CABIN_IMAGES;
-  } else if (title.includes("beach") || desc.includes("beach") || title.includes("ocean") || desc.includes("ocean") || title.includes("sea") || desc.includes("sea") || title.includes("lake") || desc.includes("lake") || loc.includes("goa")) {
-    pool = BEACH_IMAGES;
-  } else if (title.includes("luxury") || desc.includes("luxury") || title.includes("villa") || desc.includes("villa") || title.includes("mansion") || desc.includes("mansion") || property.pricePerNight > 8000) {
-    pool = LUXURY_IMAGES;
-  } else {
-    pool = LOFT_IMAGES;
+  // Parse photos JSON field for a real uploaded image
+  if (!apiImage && property.photos) {
+    try {
+      const parsed = JSON.parse(property.photos);
+      if (Array.isArray(parsed) && parsed[0]?.url) {
+        const coverUrl = parsed[0].url;
+        // Use the right pool as additional images
+        const pool = getPoolForProperty(property);
+        return [coverUrl, ...pool.slice(1)];
+      }
+    } catch (_) {}
   }
 
-  // If there's an apiImage, swap the first index with it
+  // Use type-specific pools for experiences and services
+  const pool = getPoolForProperty(property);
+
   if (apiImage && apiImage !== "/property-fallback.svg") {
     return [apiImage, ...pool.slice(1)];
   }
 
   // Permute based on property id or title length to make cards look unique
-  const shift = (property.id || title.length || 0) % 5;
+  const shift = (property.id || (property.title || "").length || 0) % 5;
   const rotated = [...pool.slice(shift), ...pool.slice(0, shift)];
   return rotated;
 };
 
+function getPoolForProperty(property) {
+  if (property.propertyType === "experience") return EXPERIENCE_IMAGES;
+  if (property.propertyType === "service") return SERVICE_IMAGES;
+
+  const title = (property.title || "").toLowerCase();
+  const desc = (property.description || "").toLowerCase();
+  const loc = (property.location || "").toLowerCase();
+
+  if (title.includes("cabin") || desc.includes("cabin") || title.includes("wood") || desc.includes("forest") || title.includes("mountain") || loc.includes("manali")) {
+    return CABIN_IMAGES;
+  } else if (title.includes("beach") || desc.includes("beach") || title.includes("ocean") || title.includes("sea") || title.includes("lake") || loc.includes("goa")) {
+    return BEACH_IMAGES;
+  } else if (title.includes("luxury") || desc.includes("luxury") || title.includes("villa") || desc.includes("villa") || title.includes("mansion") || property.pricePerNight > 8000) {
+    return LUXURY_IMAGES;
+  }
+  return LOFT_IMAGES;
+}
+
 export const getPropertyCategory = (property) => {
   if (!property) return "all";
+  if (property.propertyType === "experience") return "experiences";
+  if (property.propertyType === "service") return "services";
+
   const title = (property.title || "").toLowerCase();
   const desc = (property.description || "").toLowerCase();
   const loc = (property.location || "").toLowerCase();
