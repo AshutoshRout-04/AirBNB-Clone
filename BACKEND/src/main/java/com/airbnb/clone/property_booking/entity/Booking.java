@@ -56,4 +56,7 @@ public class Booking {
 
     @jakarta.persistence.Column(columnDefinition = "TEXT")
     private String privateNotes;
+
+    private String paymentMethod;
+    private String paymentStatus;
 }

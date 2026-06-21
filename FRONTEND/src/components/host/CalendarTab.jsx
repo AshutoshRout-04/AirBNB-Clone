@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { Calendar as CalendarIcon, Info, Lock, Unlock, Sparkles, Save, ChevronLeft, ChevronRight, PenTool } from "lucide-react"
 import { useToast } from "../Toast"
+import { getBookingsByHostId, getAllBookings } from "../../services/BookingService"
 
 export default function CalendarTab() {
   const toast = useToast()
@@ -23,12 +24,9 @@ export default function CalendarTab() {
   const [minNights, setMinNights] = useState("1")
   const [prepTime, setPrepTime] = useState("none")
 
-  // Mock Bookings matching TodayTab bookings for consistency
-  const activeBookings = [
-    { start: 10, end: 14, guest: "Ananya Iyer", rate: 4500 },
-    { start: 12, end: 18, guest: "Aarav Sharma", rate: 2500 },
-    { start: 22, end: 25, guest: "Ryan Reynolds", rate: 3200 }
-  ]
+  // Bookings list from backend
+  const [bookings, setBookings] = useState([])
+  const [loading, setLoading] = useState(false)
 
   // Default rates based on standard properties
   const defaultRate = 3000
@@ -39,6 +37,25 @@ export default function CalendarTab() {
       setCustomCalendar(stored)
     } catch (_) {}
   }, [])
+
+  useEffect(() => {
+    const storedHostId = localStorage.getItem("staybnb_host_id")
+    fetchBookings(storedHostId ? parseInt(storedHostId) : null)
+  }, [])
+
+  const fetchBookings = async (hostId) => {
+    setLoading(true)
+    try {
+      const response = hostId
+        ? await getBookingsByHostId(hostId)
+        : await getAllBookings()
+      setBookings(response.data || [])
+    } catch (err) {
+      console.error("Failed to fetch bookings in CalendarTab:", err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const saveCustomSettings = () => {
     if (!selectedRange.start || !selectedRange.end) {
@@ -179,11 +196,20 @@ export default function CalendarTab() {
     const settings = customCalendar[dateKey] || {}
 
     // Check if booked by any active booking
-    const booking = activeBookings.find(b => day >= b.start && day <= b.end && currentMonth === 5 && currentYear === 2026)
+    const booking = bookings.find(b => {
+      if (b.status === "CANCELLED" || b.status === "CHECKED_OUT") return false
+      const start = new Date(b.checkInDate)
+      const end = new Date(b.checkOutDate)
+      const currentCellDate = new Date(currentYear, currentMonth, day)
+      start.setHours(0,0,0,0)
+      end.setHours(0,0,0,0)
+      currentCellDate.setHours(0,0,0,0)
+      return currentCellDate >= start && currentCellDate <= end
+    })
     
     const isBooked = !!booking
     const isBlockedDay = settings.isBlocked
-    const currentPrice = settings.price || (booking ? booking.rate : defaultRate)
+    const currentPrice = settings.price || (booking ? booking.totalAmount : defaultRate)
     const note = settings.note
 
     let cellBg = "bg-card hover:bg-muted/50 cursor-pointer"
@@ -213,7 +239,7 @@ export default function CalendarTab() {
         <div className="mt-auto space-y-1">
           {isBooked ? (
             <div>
-              <span className="block text-[9px] font-bold text-rose-700 truncate">{booking.guest}</span>
+              <span className="block text-[9px] font-bold text-rose-700 truncate">{booking.guest?.user?.fullname || booking.guest?.user?.name || "Guest"}</span>
               <span className="block text-[8px] text-rose-600/80">Booked · ₹{currentPrice}</span>
             </div>
           ) : isBlockedDay ? (

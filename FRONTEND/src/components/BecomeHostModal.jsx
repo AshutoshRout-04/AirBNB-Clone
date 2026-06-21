@@ -91,6 +91,17 @@ export default function BecomeHostModal({ onClose, onPropertyAdded }) {
     setImageUrl(dynamicUrl)
   }
 
+  const handleLocalPhotoUpload = (e) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setImageUrl(reader.result)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   const toggleAmenity = (amenity) => {
     if (selectedAmenities.includes(amenity)) {
       setSelectedAmenities(selectedAmenities.filter(item => item !== amenity))
@@ -488,15 +499,27 @@ export default function BecomeHostModal({ onClose, onPropertyAdded }) {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wide text-foreground">Or Selected Image URL</label>
-                    <input
-                      type="url"
-                      placeholder="https://images.unsplash.com/..."
-                      value={imageUrl}
-                      onChange={(e) => setImageUrl(e.target.value)}
-                      className="mt-1 w-full rounded-lg border border-border p-2.5 text-sm bg-transparent outline-none focus:border-primary text-xs"
-                    />
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wide text-foreground">Upload Local Image File</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLocalPhotoUpload}
+                        className="mt-1 w-full text-xs text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wide text-foreground">Or Selected Image URL</label>
+                      <input
+                        type="url"
+                        placeholder="https://images.unsplash.com/..."
+                        value={imageUrl}
+                        onChange={(e) => setImageUrl(e.target.value)}
+                        className="mt-1 w-full rounded-lg border border-border p-2.5 text-sm bg-transparent outline-none focus:border-primary text-xs"
+                      />
+                    </div>
                   </div>
 
                   {imageUrl && (

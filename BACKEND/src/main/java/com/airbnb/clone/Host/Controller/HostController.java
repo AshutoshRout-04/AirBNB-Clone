@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/Host")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin
 public class HostController {
 
     private final HostService hostService;

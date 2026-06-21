@@ -16,8 +16,8 @@ import lombok.RequiredArgsConstructor;
 import com.airbnb.clone.property_booking.dto.BookingRequestDto;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:5173")
-@RequestMapping("/api/v1/bookings") // Keep the original mapping the frontend uses
+@CrossOrigin
+@RequestMapping("/api/v1/bookings")
 @RequiredArgsConstructor
 public class BookingController {
         @Autowired
@@ -63,6 +63,13 @@ public class BookingController {
         @GetMapping("/host/{hostId}")
         public ResponseEntity<List<Booking>> getBookingsByHostId(@PathVariable Long hostId) {
                 return ResponseEntity.ok(bookingService.getBookingsByHostId(hostId));
+        }
+
+        @PatchMapping("/{bookingId}/status")
+        public ResponseEntity<Booking> updateBookingStatus(
+                        @PathVariable Long bookingId,
+                        @RequestParam String status) {
+                return ResponseEntity.ok(bookingService.updateBookingStatus(bookingId, status));
         }
 
         @DeleteMapping("/{bookingId}")

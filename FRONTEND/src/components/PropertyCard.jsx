@@ -1,13 +1,24 @@
 import { useState, useEffect } from "react"
 import { Star, Users, BedDouble, Bath, Heart, ChevronLeft, ChevronRight, Sparkles, Briefcase } from "lucide-react"
 import { getPropertyImages } from "../services/ImageHelper"
+import { getRatingSummary } from "../services/ReviewService"
 
 export default function PropertyCard({ property, onSelect }) {
-  const { id, title, location, pricePerNight, bedrooms, bathrooms, maxGuests, available, rating = 4.8, propertyType, companyName } = property
+  const { id, title, location, pricePerNight, bedrooms, bathrooms, maxGuests, available, rating, propertyType, companyName } = property
   const images = getPropertyImages(property)
 
   const [imageIndex, setImageIndex] = useState(0)
   const [liked, setLiked] = useState(false)
+  const [ratingData, setRatingData] = useState({ rating: null, count: 0 })
+
+  // Fetch real rating from backend
+  useEffect(() => {
+    if (id) {
+      getRatingSummary(id)
+        .then(res => setRatingData(res.data || { rating: null, count: 0 }))
+        .catch(() => setRatingData({ rating: null, count: 0 }))
+    }
+  }, [id])
 
   // Sync favorites with localStorage
   useEffect(() => {
@@ -118,7 +129,7 @@ export default function PropertyCard({ property, onSelect }) {
         <h3 className="font-bold text-sm leading-tight text-foreground truncate">{title}</h3>
         <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-foreground">
           <Star size={12} className="fill-foreground stroke-foreground" />
-          {rating.toFixed(2)}
+          {ratingData.rating != null ? Number(ratingData.rating).toFixed(1) : "New"}
         </span>
       </div>
 

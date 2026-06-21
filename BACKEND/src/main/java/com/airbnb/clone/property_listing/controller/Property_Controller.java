@@ -18,7 +18,7 @@ import com.airbnb.clone.Host.Repository.HostRepository;
 import com.airbnb.clone.property_listing.entity.Property;
 import com.airbnb.clone.property_listing.service.Property_Service;
 
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin
 @RestController
 @RequestMapping("/properties")
 public class Property_Controller {

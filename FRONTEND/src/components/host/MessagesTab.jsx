@@ -1,63 +1,20 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { MessageSquare, Calendar, Check, Send, Clock, BookOpen, ToggleLeft, ToggleRight, Sparkles, User, ShieldAlert, Plus, Trash2 } from "lucide-react"
 import { useToast } from "../Toast"
+import { Client } from "@stomp/stompjs"
+import axios from "axios"
 
 export default function MessagesTab({ prefilledGuestName, prefilledMessage }) {
   const toast = useToast()
   
-  // Conversations list
-  const [conversations, setConversations] = useState([
-    {
-      id: 1,
-      guestName: "Aarav Sharma",
-      avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=80&h=80&q=80",
-      lastMessage: "Thank you for the quick response! Can't wait to check-in.",
-      time: "10:15 AM",
-      unread: false,
-      hasRequest: false,
-      chatHistory: [
-        { sender: "guest", text: "Hello! Is it possible to check in 1 hour early tomorrow?", time: "09:30 AM" },
-        { sender: "host", text: "Hi Aarav, let me check with my cleaning crew. Yes, that should be absolutely fine! The keys will be in the lockbox.", time: "10:02 AM" },
-        { sender: "guest", text: "Thank you for the quick response! Can't wait to check-in.", time: "10:15 AM" }
-      ]
-    },
-    {
-      id: 2,
-      guestName: "Priya Patel",
-      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=80&h=80&q=80",
-      lastMessage: "Sent you a booking request for June 15 - June 19.",
-      time: "Yesterday",
-      unread: true,
-      hasRequest: true,
-      requestDetails: {
-        dates: "June 15 - June 19, 2026 (4 nights)",
-        property: "Cozy Pine Cabin & Spa",
-        payout: 18000,
-        guests: 2,
-        status: "PENDING"
-      },
-      chatHistory: [
-        { sender: "guest", text: "Hi! Your cabin looks lovely. I just submitted a booking request. We are visiting Goa for our anniversary.", time: "08:14 PM" }
-      ]
-    },
-    {
-      id: 3,
-      guestName: "Ryan Reynolds",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=80&h=80&q=80",
-      lastMessage: "Do you have fiber internet at the loft?",
-      time: "June 8",
-      unread: false,
-      hasRequest: false,
-      chatHistory: [
-        { sender: "guest", text: "Hi Ashutosh, do you have fiber internet at the loft? I will have to join a few video calls.", time: "02:11 PM" },
-        { sender: "host", text: "Hi Ryan, yes! We have high-speed 200 Mbps fiber connection. You will have smooth connectivity.", time: "02:30 PM" }
-      ]
-    }
-  ])
-
-  const [activeConvId, setActiveConvId] = useState(1)
+  // Conversations list loaded from backend
+  const [conversations, setConversations] = useState([])
+  const [activeConvId, setActiveConvId] = useState(null)
+  const stompClientRef = useRef(null)
+  const subscriptionRef = useRef(null)
   const [activeSubTab, setActiveSubTab] = useState("chat") // 'chat' | 'scheduled'
   const [inputMsg, setInputMsg] = useState("")
+  const [loading, setLoading] = useState(false)
 
   // Quick replies list (stored in state + templates modal option)
   const [quickReplies, setQuickReplies] = useState([
@@ -83,9 +40,137 @@ export default function MessagesTab({ prefilledGuestName, prefilledMessage }) {
   const [schedTime, setSchedTime] = useState("3 days before arrival")
   const [schedText, setSchedText] = useState("")
 
+  useEffect(() => {
+    const storedHostId = localStorage.getItem("staybnb_host_id")
+    fetchData(storedHostId ? parseInt(storedHostId) : null)
+  }, [])
+
+  const fetchData = async (hostId) => {
+    setLoading(true)
+    try {
+      const { getBookingsByHostId, getAllBookings } = await import("../../services/BookingService")
+      const response = hostId
+        ? await getBookingsByHostId(hostId)
+        : await getAllBookings()
+      const fetchedBookings = response.data || []
+      
+      const mappedConvs = await Promise.all(fetchedBookings.map(async (b) => {
+        const guestName = b.guest?.user?.fullname || b.guest?.user?.name || "Guest"
+        const avatar = b.guest?.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&h=80&q=80"
+        
+        let chatHistory = []
+        try {
+          const res = await axios.get(`http://localhost:8086/api/v1/chat/booking/${b.bookingId}`)
+          chatHistory = res.data || []
+        } catch (err) {
+          console.error("Failed to load chat history for booking " + b.bookingId, err)
+        }
+
+        if (chatHistory.length === 0) {
+          chatHistory = [
+            { 
+              sender: "guest", 
+              text: `Hi! I'm looking forward to my stay at your property "${b.property?.title || "Property"}" from ${b.checkInDate} to ${b.checkOutDate}.`, 
+              time: "10:00 AM" 
+            }
+          ]
+        }
+
+        return {
+          id: b.bookingId,
+          bookingId: b.bookingId,
+          guestName,
+          avatar,
+          lastMessage: chatHistory[chatHistory.length - 1]?.text || "",
+          time: chatHistory[chatHistory.length - 1]?.time || "Today",
+          unread: false,
+          hasRequest: b.status === "PENDING",
+          requestDetails: b.status === "PENDING" ? {
+            dates: `${b.checkInDate} - ${b.checkOutDate}`,
+            property: b.property?.title || "Property",
+            payout: b.totalAmount || 0,
+            guests: b.property?.maxGuests || 2,
+            status: "PENDING"
+          } : null,
+          chatHistory
+        }
+      }))
+
+      setConversations(mappedConvs)
+      if (mappedConvs.length > 0) {
+        setActiveConvId(mappedConvs[0].id)
+      }
+    } catch (err) {
+      console.error("Failed to load conversations:", err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Manage WebSockets STOMP connection (native WS - no SockJS import needed)
+  useEffect(() => {
+    const client = new Client({
+      brokerURL: "ws://localhost:8086/ws-chat/websocket",
+      reconnectDelay: 5000,
+      onConnect: () => {
+        console.log("Stomp connection active")
+        if (activeConvId) {
+          subscribeToChat(client, activeConvId)
+        }
+      },
+      onStompError: (frame) => {
+        console.error("Broker reported error: " + frame.headers['message'])
+      },
+      onWebSocketError: (error) => {
+        console.warn("WebSocket error (backend may not be running):", error)
+      }
+    })
+
+    client.activate()
+    stompClientRef.current = client
+
+    return () => {
+      if (stompClientRef.current) {
+        stompClientRef.current.deactivate()
+      }
+    }
+  }, [])
+
+  // Switch subscriptions dynamically
+  useEffect(() => {
+    if (stompClientRef.current && stompClientRef.current.connected && activeConvId) {
+      subscribeToChat(stompClientRef.current, activeConvId)
+    }
+  }, [activeConvId])
+
+  const subscribeToChat = (client, bookingId) => {
+    if (subscriptionRef.current) {
+      subscriptionRef.current.unsubscribe()
+      subscriptionRef.current = null
+    }
+
+    const sub = client.subscribe(`/topic/booking/${bookingId}`, (message) => {
+      const msg = JSON.parse(message.body)
+      setConversations(prev => prev.map(c => {
+        if (c.bookingId === bookingId) {
+          const exists = c.chatHistory.some(m => m.text === msg.text && m.sender === msg.sender && m.time === msg.time)
+          const updatedHistory = exists ? c.chatHistory : [...c.chatHistory, msg]
+          return {
+            ...c,
+            lastMessage: msg.text,
+            time: msg.time || "Just now",
+            chatHistory: updatedHistory
+          }
+        }
+        return c
+      }))
+    })
+    subscriptionRef.current = sub
+  }
+
   // Handle incoming prefilled messaging requests from TodayTab
   useEffect(() => {
-    if (prefilledGuestName) {
+    if (prefilledGuestName && conversations.length > 0) {
       const existing = conversations.find(c => c.guestName.toLowerCase().includes(prefilledGuestName.toLowerCase()))
       if (existing) {
         setActiveConvId(existing.id)
@@ -93,9 +178,10 @@ export default function MessagesTab({ prefilledGuestName, prefilledMessage }) {
           setInputMsg(prefilledMessage)
         }
       } else {
-        // Create new conversation block dynamically
+        const newId = Date.now()
         const newConv = {
-          id: Date.now(),
+          id: newId,
+          bookingId: newId,
           guestName: prefilledGuestName,
           avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&h=80&q=80",
           lastMessage: prefilledMessage || "Inquiry started",
@@ -106,41 +192,60 @@ export default function MessagesTab({ prefilledGuestName, prefilledMessage }) {
             { sender: "host", text: prefilledMessage || "Hello! How can I assist you with your booking?", time: "Just now" }
           ]
         }
+        if (stompClientRef.current && stompClientRef.current.connected) {
+          stompClientRef.current.publish({
+            destination: `/app/chat/${newId}`,
+            body: JSON.stringify({ sender: "host", text: newConv.lastMessage, bookingId: newId })
+          })
+        }
         setConversations([newConv, ...conversations])
-        setActiveConvId(newConv.id)
+        setActiveConvId(newId)
       }
     }
-  }, [prefilledGuestName, prefilledMessage])
+  }, [prefilledGuestName, prefilledMessage, conversations])
 
   const activeConv = conversations.find(c => c.id === activeConvId) || conversations[0]
 
   const handleSendMessage = () => {
-    if (!inputMsg.trim()) return
-    const newMsg = {
+    if (!inputMsg.trim() || !activeConv) return
+
+    const chatMsg = {
       sender: "host",
       text: inputMsg,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      bookingId: activeConv.bookingId
     }
 
-    const updatedConversations = conversations.map(c => {
-      if (c.id === activeConv.id) {
-        return {
-          ...c,
-          lastMessage: inputMsg,
-          time: "Just now",
-          chatHistory: [...c.chatHistory, newMsg]
-        }
+    if (stompClientRef.current && stompClientRef.current.connected) {
+      stompClientRef.current.publish({
+        destination: `/app/chat/${activeConv.bookingId}`,
+        body: JSON.stringify(chatMsg)
+      })
+      setInputMsg("")
+    } else {
+      // Fallback update
+      const newMsg = {
+        sender: "host",
+        text: inputMsg,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }
-      return c
-    })
-
-    setConversations(updatedConversations)
-    setInputMsg("")
-    toast({
-      type: "success",
-      title: "Message Sent",
-      message: `Sent to ${activeConv.guestName}.`
-    })
+      setConversations(prev => prev.map(c => {
+        if (c.id === activeConv.id) {
+          return {
+            ...c,
+            lastMessage: inputMsg,
+            time: "Just now",
+            chatHistory: [...c.chatHistory, newMsg]
+          }
+        }
+        return c
+      }))
+      setInputMsg("")
+      toast({
+        type: "warning",
+        title: "Offline Mode",
+        message: "Message updated locally; connection to WebSocket server is currently offline."
+      })
+    }
   }
 
   const applyQuickReply = (text) => {
@@ -257,6 +362,32 @@ export default function MessagesTab({ prefilledGuestName, prefilledMessage }) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 animate-fade-in">
+
+      {/* Loading state */}
+      {loading && (
+        <div className="flex items-center justify-center h-[75vh]">
+          <div className="text-center space-y-3">
+            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-sm text-muted-foreground font-medium">Loading conversations...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Empty state – backend returned no bookings */}
+      {!loading && conversations.length === 0 && (
+        <div className="flex items-center justify-center h-[75vh]">
+          <div className="text-center space-y-3 max-w-xs">
+            <MessageSquare className="mx-auto text-muted-foreground/40" size={48} />
+            <h3 className="font-bold text-foreground text-base">No conversations yet</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Conversations will appear here once you have active bookings. Make sure the backend is running.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Main chat layout — only rendered when conversations have loaded */}
+      {!loading && conversations.length > 0 && (
       <div className="flex bg-card border border-border rounded-2xl shadow-sm overflow-hidden h-[75vh]">
         
         {/* Left Sidebar: Conversations list */}
@@ -509,6 +640,8 @@ export default function MessagesTab({ prefilledGuestName, prefilledMessage }) {
         </div>
 
       </div>
+
+      )} {/* End of main chat layout conditional */}
 
       {/* Floating Modal for Adding Automated Trigger */}
       {isAddingTrigger && (

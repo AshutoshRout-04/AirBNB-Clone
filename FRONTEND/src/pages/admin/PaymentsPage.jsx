@@ -45,8 +45,8 @@ export default function PaymentsPage() {
 
       bookings.forEach(b => {
         const guestName = b.guest?.user?.fullname || "Unknown Guest";
-        const hostName = b.property?.host_Id?.user?.fullname || b.property?.host_id?.user?.fullname || "Unknown Host";
-        const amount = Number(b.totalPrice || 0);
+        const hostName = b.property?.Host_Id?.user?.fullname || b.property?.host_Id?.user?.fullname || b.property?.host_id?.user?.fullname || "Unknown Host";
+        const amount = Number(b.totalAmount || b.totalPrice || 0);
         const fee = amount * 0.1;
 
         // 1. Booking Transaction (Guest -> Platform)
@@ -64,25 +64,25 @@ export default function PaymentsPage() {
         }
 
         generatedTxns.push({
-          id: `TXN-BK-${b.id}`,
+          id: `TXN-BK-${b.bookingId || b.id}`,
           type: "Booking",
           user: guestName,
           amount: amount,
           fee: fee,
           status: bookingStatus,
-          date: b.checkIn || "N/A"
+          date: b.checkInDate || b.checkIn || "N/A"
         });
 
         // 2. Host Payout Transaction (Platform -> Host) if confirmed
         if (bookingStatus === "Completed") {
           generatedTxns.push({
-            id: `TXN-PO-${b.id}`,
+            id: `TXN-PO-${b.bookingId || b.id}`,
             type: "Payout",
             user: hostName,
             amount: amount - fee,
             fee: 0,
             status: "Processed",
-            date: b.checkOut || "N/A"
+            date: b.checkOutDate || b.checkOut || "N/A"
           });
         }
       });

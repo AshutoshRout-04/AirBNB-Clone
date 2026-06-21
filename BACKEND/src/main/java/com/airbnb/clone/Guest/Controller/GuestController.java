@@ -11,6 +11,7 @@ import com.airbnb.clone.Guest.Service.GuestService;
 
 import lombok.RequiredArgsConstructor;
 
+@CrossOrigin
 @RestController
 @RequestMapping("/api/Guest")
 @RequiredArgsConstructor

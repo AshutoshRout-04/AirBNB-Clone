@@ -17,7 +17,7 @@ import com.airbnb.clone.User.Service.UserService;
 
 import lombok.RequiredArgsConstructor;
 
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/user")

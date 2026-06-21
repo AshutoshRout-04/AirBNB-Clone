@@ -65,7 +65,7 @@ public class Property {
     @Column(columnDefinition = "TEXT")
     private String amenities;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "LONGTEXT")
     private String photos;
 
     private String wifiNetwork;

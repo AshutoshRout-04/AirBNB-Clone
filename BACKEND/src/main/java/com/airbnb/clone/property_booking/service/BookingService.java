@@ -18,7 +18,9 @@ public interface BookingService {
 
     Booking updateBooking(Long bookingId, Booking updatedBooking);
 
+    Booking updateBookingStatus(Long bookingId, String status);
+
     List<Booking> getBookingsByHostId(Long hostId);
 
     void deleteBooking(Long bookingId);
-}
+}

@@ -20,20 +20,19 @@ import {
   ArrowLeft,
   Lock,
   RefreshCw,
+  MessageSquare,
 } from "lucide-react"
 import { getPropertyImages } from "../services/ImageHelper"
 import { createBooking } from "../services/BookingService"
+import { getReviewsByProperty } from "../services/ReviewService"
+import { useAuth } from "./LoginModal"
 
 const HOST_NAMES = ["Rahul Sharma", "Sarah Jenkins", "Amit Patel", "Elena Rostova", "Marcus Vance", "Yuki Tanaka"]
-const MOCK_REVIEWS = [
-  { author: "John D.", rating: 5, date: "May 2026", comment: "Absolutely incredible stay! The views were even better than the photos. Super clean and responsive host." },
-  { author: "Priya K.", rating: 5, date: "April 2026", comment: "Perfect weekend getaway. Highly recommend this place for families or groups. Very cozy and well equipped." },
-  { author: "Michael S.", rating: 4, date: "March 2026", comment: "Lovely house with amazing architecture. Only small issue was Wi-Fi drop in the corner bedroom, but otherwise perfect." }
-]
 
 export default function PropertyDetailModal({ property, onClose, onBookingSuccess }) {
-  const { id, title, location, pricePerNight, bedrooms, bathrooms, maxGuests, description, rating = 4.85, propertyType, companyName } = property
+  const { id, title, location, pricePerNight, bedrooms, bathrooms, maxGuests, description, propertyType, companyName } = property
   const images = getPropertyImages(property)
+  const { user } = useAuth()
 
   const [checkIn, setCheckIn] = useState("")
   const [checkOut, setCheckOut] = useState("")
@@ -43,6 +42,20 @@ export default function PropertyDetailModal({ property, onClose, onBookingSucces
   const [bookingLoading, setBookingLoading] = useState(false)
   const [bookingError, setBookingError] = useState(null)
   const [successBooking, setSuccessBooking] = useState(null)
+
+  // Real reviews from backend
+  const [reviews, setReviews] = useState([])
+  const [reviewsLoading, setReviewsLoading] = useState(false)
+
+  useEffect(() => {
+    if (id) {
+      setReviewsLoading(true)
+      getReviewsByProperty(id)
+        .then(res => setReviews(res.data || []))
+        .catch(() => setReviews([]))
+        .finally(() => setReviewsLoading(false))
+    }
+  }, [id])
 
   // Payment checkout states
   const [paymentStep, setPaymentStep] = useState("reserve") // "reserve" | "checkout" | "processing" | "success"
@@ -80,7 +93,12 @@ export default function PropertyDetailModal({ property, onClose, onBookingSucces
   const serviceFee = nights > 0 ? Math.round(baseTotal * 0.12) : 0
   const grandTotal = baseTotal + cleaningFee + serviceFee
 
-  const hostName = HOST_NAMES[id % HOST_NAMES.length]
+  console.log("DEBUG - Selected Property object:", property)
+  const hostName = property?.Host_Id?.user?.fullname || 
+                   property?.host_Id?.user?.name || 
+                   property?.host_id?.user?.fullname || 
+                   property?.host_Id?.user?.fullname || 
+                   HOST_NAMES[id % HOST_NAMES.length]
 
   const handleReserve = (e) => {
     e.preventDefault()
@@ -108,7 +126,10 @@ export default function PropertyDetailModal({ property, onClose, onBookingSucces
       checkOutDate: checkOut,
       totalAmount: grandTotal,
       status: "CONFIRMED",
+      paymentMethod: paymentMethod.toUpperCase(),
+      paymentStatus: "PAID",
       guestId: guestIdStr ? parseInt(guestIdStr, 10) : null,
+      userId: user?.id || null,
       propertyId: id
     }
 
@@ -364,14 +385,19 @@ export default function PropertyDetailModal({ property, onClose, onBookingSucces
               <div className="pr-12">
                 <h2 className="text-xl md:text-2xl font-bold leading-tight">{title}</h2>
                 <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-foreground">
-                  <span className="flex items-center gap-1 font-semibold">
-                    <Star size={16} className="fill-foreground" /> {rating}
-                  </span>
-                  <span className="text-muted-foreground font-medium underline">
-                    {MOCK_REVIEWS.length} reviews
-                  </span>
-                  <span className="text-muted-foreground font-medium underline">{location}</span>
-                </div>
+                   <span className="flex items-center gap-1 font-semibold">
+                     <Star size={16} className="fill-foreground" />
+                     {reviews.length > 0
+                       ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+                       : "New"}
+                   </span>
+                   <span className="text-muted-foreground font-medium underline">
+                     {reviews.length > 0
+                       ? `${reviews.length} ${reviews.length === 1 ? "review" : "reviews"}`
+                       : "No reviews yet"}
+                   </span>
+                   <span className="text-muted-foreground font-medium underline">{location}</span>
+                 </div>
               </div>
 
               {/* Photo Grid Layout */}
@@ -497,31 +523,58 @@ export default function PropertyDetailModal({ property, onClose, onBookingSucces
                     </div>
                   </div>
 
-                  {/* Reviews Section */}
+                  {/* Reviews Section — live from DB */}
                   <div className="py-6">
                     <h3 className="text-md font-bold mb-4 flex items-center gap-2">
-                      <Star size={18} className="fill-foreground" /> {rating} · {MOCK_REVIEWS.length} reviews
+                      <Star size={18} className="fill-foreground" />
+                      {reviews.length > 0
+                        ? `${(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)} · ${reviews.length} ${reviews.length === 1 ? "review" : "reviews"}`
+                        : "No reviews yet"}
                     </h3>
-                    <div className="space-y-6">
-                      {MOCK_REVIEWS.map((rev, index) => (
-                        <div key={index} className="text-sm border-b border-border/30 pb-4 last:border-none">
-                          <div className="flex items-center justify-between">
-                            <span className="font-semibold">{rev.author}</span>
-                            <span className="text-xs text-muted-foreground">{rev.date}</span>
-                          </div>
-                          <div className="mt-1 flex items-center gap-0.5">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <Star
-                                key={i}
-                                size={12}
-                                className={i < rev.rating ? "fill-primary text-primary" : "text-border"}
-                              />
-                            ))}
-                          </div>
-                          <p className="mt-2 text-muted-foreground leading-relaxed">{rev.comment}</p>
-                        </div>
-                      ))}
-                    </div>
+
+                    {reviewsLoading ? (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <RefreshCw size={14} className="animate-spin" /> Loading reviews...
+                      </div>
+                    ) : reviews.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground border border-dashed border-border rounded-xl">
+                        <MessageSquare size={28} className="mx-auto mb-2 opacity-40" />
+                        <p className="text-sm font-semibold text-foreground">No reviews yet</p>
+                        <p className="text-xs mt-1">Be the first to share your experience after your stay!</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {reviews.map((rev) => {
+                          const guestName = rev.guest?.user?.fullname || rev.guest?.user?.name || "Guest"
+                          const dateStr = rev.createdAt
+                            ? new Date(rev.createdAt).toLocaleDateString("en-IN", { month: "long", year: "numeric" })
+                            : ""
+                          return (
+                            <div key={rev.reviewId} className="text-sm border-b border-border/30 pb-5 last:border-none">
+                              <div className="flex items-center gap-3 mb-2">
+                                <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-sm border border-primary/20">
+                                  {guestName.charAt(0)}
+                                </div>
+                                <div>
+                                  <span className="block font-semibold text-foreground">{guestName}</span>
+                                  <span className="text-xs text-muted-foreground">{dateStr}</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-0.5 mb-2">
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    size={13}
+                                    className={i < rev.rating ? "fill-amber-400 text-amber-400" : "text-border fill-border"}
+                                  />
+                                ))}
+                              </div>
+                              <p className="text-muted-foreground leading-relaxed">{rev.comment}</p>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
 

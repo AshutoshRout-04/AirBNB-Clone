@@ -8,11 +8,16 @@ import org.springframework.stereotype.Service;
 import com.airbnb.clone.property_listing.entity.Property;
 import com.airbnb.clone.property_listing.exception.PropertyNotFoundException;
 import com.airbnb.clone.property_listing.repository.Property_Repository;
+import com.airbnb.clone.Host.Entity.Host;
+import com.airbnb.clone.Host.Repository.HostRepository;
 
 @Service
 public class Property_ServiceImpl implements Property_Service {
     @Autowired
     private Property_Repository propertyRepository;
+
+    @Autowired
+    private HostRepository hostRepository;
       
     @Override
     public Property addProperty(Property property) {
@@ -22,12 +27,38 @@ public class Property_ServiceImpl implements Property_Service {
     
     @Override
     public Property getPropertyById(Long id) {
-        return propertyRepository.findById(id).orElseThrow(() -> new PropertyNotFoundException("Property Not Found: " + id));
+        Property property = propertyRepository.findById(id).orElseThrow(() -> new PropertyNotFoundException("Property Not Found: " + id));
+        if (property.getHost_Id() == null) {
+            List<Host> hosts = hostRepository.findAll();
+            if (!hosts.isEmpty()) {
+                property.setHost_Id(hosts.get(0));
+                property = propertyRepository.save(property);
+            }
+        }
+        return property;
     }
     
     @Override
     public List<Property> getAllProperties() {
-        return propertyRepository.findAll();
+        List<Property> properties = propertyRepository.findAll();
+        List<Host> hosts = null;
+        boolean updated = false;
+        for (Property p : properties) {
+            if (p.getHost_Id() == null) {
+                if (hosts == null) {
+                    hosts = hostRepository.findAll();
+                }
+                if (!hosts.isEmpty()) {
+                    p.setHost_Id(hosts.get(0));
+                    propertyRepository.save(p);
+                    updated = true;
+                }
+            }
+        }
+        if (updated) {
+            return propertyRepository.findAll();
+        }
+        return properties;
     }
     
     @Override

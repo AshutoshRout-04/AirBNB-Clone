@@ -20,7 +20,9 @@ export const getProperties    = ()  => adminApi.get("/admin/properties");
 export const deleteProperty   = (id) => adminApi.delete(`/admin/properties/${id}`);
 
 // ── Bookings ─────────────────────────────────────────────────────────────────
-export const getBookings    = ()  => adminApi.get("/admin/bookings");
-export const deleteBooking  = (id) => adminApi.delete(`/admin/bookings/${id}`);
+export const getBookings          = ()         => adminApi.get("/admin/bookings");
+export const deleteBooking        = (id)       => adminApi.delete(`/admin/bookings/${id}`);
+export const updateBookingStatus  = (id, status) => adminApi.patch(`/bookings/${id}/status?status=${status}`);
 
 export default adminApi;
+

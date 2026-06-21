@@ -44,7 +44,7 @@ public class User implements UserDetails  {
     private Role role;
     private String contact;
 
-    @jakarta.persistence.Column(columnDefinition = "TEXT")
+    @jakarta.persistence.Column(columnDefinition = "LONGTEXT")
     private String avatar;
 
     @jakarta.persistence.Column(columnDefinition = "TEXT")

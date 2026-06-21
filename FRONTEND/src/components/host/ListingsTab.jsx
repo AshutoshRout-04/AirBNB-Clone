@@ -3,6 +3,7 @@ import { Plus, Edit2, Trash2, Camera, Sparkles, CheckCircle2, Eye, BookOpen, Wif
 import { getAllProperties, createProperty, createPropertyForHost, updateProperty, deleteProperty, getPropertiesByHost } from "../../services/PropertyService"
 import { getPropertyImages } from "../../services/ImageHelper"
 import { useToast } from "../Toast"
+import { getRatingSummary } from "../../services/ReviewService"
 
 // Category-based Amenities (simulate 150 options)
 const CATEGORIZED_AMENITIES = {
@@ -34,6 +35,7 @@ export default function ListingsTab() {
   // Modals & Panels state
   const [editingProperty, setEditingProperty] = useState(null) // null = view list, 'new' = create, {id} = editing
   const [previewProperty, setPreviewProperty] = useState(null) // property to preview as guest
+  const [previewRatingSummary, setPreviewRatingSummary] = useState({ rating: null, count: 0 })
   const [activeListingTab, setActiveListingTab] = useState("details") // 'details' | 'photos' | 'amenities' | 'guide'
   
   // Form values
@@ -299,6 +301,28 @@ export default function ListingsTab() {
     setUploadedPhotos(uploadedPhotos.filter(p => p.id !== photoId))
   }
 
+  const handleLocalPhotoUpload = (e) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const newPic = {
+          id: Date.now(),
+          url: reader.result,
+          caption: "Uploaded photo",
+          category: "Unsorted"
+        }
+        setUploadedPhotos([...uploadedPhotos, newPic])
+        toast({
+          type: "success",
+          title: "Photo Uploaded",
+          message: "New photo uploaded to your property gallery."
+        })
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   const runAISort = () => {
     setAiSorting(true)
     setTimeout(() => {
@@ -421,9 +445,19 @@ export default function ListingsTab() {
                         <Edit2 size={12} /> Edit
                       </button>
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           setSelectedAmenities(["Wi-Fi", "Kitchen", "Air Conditioning", "Free parking on premises"])
                           setPreviewProperty(prop)
+                          try {
+                            const res = await getRatingSummary(prop.id)
+                            setPreviewRatingSummary({
+                              rating: res.data.rating ? parseFloat(res.data.rating).toFixed(2) : null,
+                              count: res.data.count || 0
+                            })
+                          } catch (err) {
+                            console.error(err)
+                            setPreviewRatingSummary({ rating: null, count: 0 })
+                          }
                         }}
                         className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg border border-border hover:bg-muted text-foreground font-bold text-xs transition cursor-pointer"
                       >
@@ -677,21 +711,33 @@ export default function ListingsTab() {
                   ))}
                 </div>
 
-                <div className="flex gap-2 max-w-xl border-t border-border pt-4">
-                  <input
-                    type="text"
-                    placeholder="Paste Image URL (e.g. Unsplash URL)..."
-                    value={newPhotoUrl}
-                    onChange={(e) => setNewPhotoUrl(e.target.value)}
-                    className="flex-1 rounded-xl border border-border px-3.5 py-2 text-xs outline-none focus:border-primary bg-transparent text-foreground"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddPhoto}
-                    className="px-4 py-2 bg-neutral-800 text-white rounded-xl text-xs font-bold hover:bg-neutral-900 cursor-pointer flex items-center gap-1"
-                  >
-                    <Camera size={12} /> Add Photo
-                  </button>
+                <div className="flex flex-col gap-3 max-w-xl border-t border-border pt-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wide text-foreground mb-1">Upload Local Image File</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLocalPhotoUpload}
+                      className="w-full text-xs text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Or Paste Image URL (e.g. Unsplash)..."
+                      value={newPhotoUrl}
+                      onChange={(e) => setNewPhotoUrl(e.target.value)}
+                      className="flex-1 rounded-xl border border-border px-3.5 py-2 text-xs outline-none focus:border-primary bg-transparent text-foreground"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddPhoto}
+                      className="px-4 py-2 bg-neutral-800 text-white rounded-xl text-xs font-bold hover:bg-neutral-900 cursor-pointer flex items-center gap-1"
+                    >
+                      <Camera size={12} /> Add Photo
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -848,9 +894,11 @@ export default function ListingsTab() {
                 <h2 className="text-xl md:text-2xl font-bold leading-tight">{previewProperty.title}</h2>
                 <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-foreground">
                   <span className="flex items-center gap-1 font-semibold">
-                    <Star size={16} className="fill-foreground text-foreground animate-pulse" /> {previewProperty.rating || "4.85"}
+                    <Star size={16} className="fill-amber-400 text-amber-400" /> {previewRatingSummary.rating || "New"}
                   </span>
-                  <span className="text-muted-foreground font-medium underline">3 reviews</span>
+                  <span className="text-muted-foreground font-medium underline">
+                    {previewRatingSummary.count > 0 ? `${previewRatingSummary.count} ${previewRatingSummary.count === 1 ? 'review' : 'reviews'}` : "No reviews yet"}
+                  </span>
                   <span className="text-muted-foreground font-medium underline">{previewProperty.location}</span>
                 </div>
               </div>

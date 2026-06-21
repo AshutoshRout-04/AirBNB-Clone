@@ -22,6 +22,11 @@ export const updateBooking = (bookingId, bookingData) => {
   return axios.put(`${API_URL}/${bookingId}`, bookingData);
 };
 
+export const updateBookingStatus = (bookingId, status) => {
+  return axios.patch(`${API_URL}/${bookingId}/status?status=${status}`);
+};
+
 export const deleteBooking = (bookingId) => {
   return axios.delete(`${API_URL}/${bookingId}`);
 };
+
